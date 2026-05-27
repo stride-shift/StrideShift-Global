@@ -1,0 +1,686 @@
+@import url('https://fonts.googleapis.com/css2?family=Gloock&family=Wix+Madefor+Text:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   STRIDESHIFT — NEW BRAND PALETTE
+   "Angle" colorway: warm cream + deep ink, with soft sky-blue
+   and sage-green tinted surfaces, plus a single gold spark.
+   Every token shipped in BOTH modes so utilities adapt cleanly.
+   ============================================================ */
+
+@layer base {
+  :root {
+    --background: 40 30% 96%;
+    --foreground: 212 32% 9%;
+
+    --card: 40 28% 98%;
+    --card-foreground: 212 32% 9%;
+
+    --popover: 40 28% 98%;
+    --popover-foreground: 212 32% 9%;
+
+    --primary: 212 32% 9%;
+    --primary-foreground: 40 28% 97%;
+
+    --secondary: 40 22% 92%;
+    --secondary-foreground: 212 30% 14%;
+
+    --muted: 40 22% 92%;
+    --muted-foreground: 213 12% 38%;
+
+    --accent: 208 35% 90%;
+    --accent-foreground: 212 30% 14%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 40 28% 97%;
+
+    --border: 40 18% 88%;
+    --input: 40 18% 88%;
+    --ring: 208 32% 48%;
+
+    --radius: 0.875rem;
+
+    /* ----- Stride brand tokens (light) ----- */
+    /* "navy" = deep ink — the bold dark sections of the site */
+    --stride-navy: 212 32% 9%;
+    --stride-navy-dark: 213 38% 5%;
+    --stride-navy-light: 212 22% 22%;
+
+    /* primary accent: the soft sky blue from the POV Reports card */
+    --stride-accent: 208 32% 48%;
+    --stride-accent-soft: 208 40% 90%;
+
+    /* typography */
+    --stride-text-strong: 212 32% 9%;
+    --stride-text-muted: 213 12% 40%;
+
+    /* surfaces */
+    --stride-bg: 40 30% 95%;          /* page cream */
+    --stride-bg-elev: 40 28% 98%;     /* elevated cards (slightly brighter) */
+    --stride-border: 40 18% 87%;
+
+    /* NEW tokens — sage, sky-explicit, gold, cream */
+    --stride-cream: 40 30% 95%;
+    --stride-cream-warm: 38 38% 92%;
+    --stride-ink: 212 32% 9%;
+    --stride-ink-deep: 213 38% 5%;
+
+    --stride-sky: 208 32% 48%;
+    --stride-sky-soft: 208 40% 90%;
+    --stride-sky-tint: 208 55% 95%;   /* very subtle card wash */
+
+    --stride-sage: 108 18% 44%;
+    --stride-sage-soft: 100 22% 88%;
+    --stride-sage-tint: 96 35% 94%;
+
+    --stride-gold: 42 65% 60%;
+    --stride-gold-soft: 42 70% 84%;
+
+    --stride-success: 135 35% 38%;
+  }
+
+  .dark {
+    --background: 212 32% 6%;
+    --foreground: 40 22% 92%;
+
+    --card: 212 26% 10%;
+    --card-foreground: 40 22% 92%;
+
+    --popover: 212 26% 10%;
+    --popover-foreground: 40 22% 92%;
+
+    --primary: 40 28% 95%;
+    --primary-foreground: 212 32% 9%;
+
+    --secondary: 212 22% 14%;
+    --secondary-foreground: 40 22% 92%;
+
+    --muted: 212 20% 16%;
+    --muted-foreground: 213 14% 65%;
+
+    --accent: 212 24% 18%;
+    --accent-foreground: 40 22% 92%;
+
+    --destructive: 0 65% 50%;
+    --destructive-foreground: 40 22% 92%;
+
+    --border: 213 18% 18%;
+    --input: 213 18% 20%;
+    --ring: 208 50% 60%;
+
+    /* ----- Stride brand tokens (dark) ----- */
+    --stride-navy: 212 36% 4%;
+    --stride-navy-dark: 215 42% 3%;
+    --stride-navy-light: 212 28% 14%;
+
+    --stride-accent: 208 50% 65%;
+    /* accent-soft kept light: it's used as bright marks on always-dark navy
+       surfaces (e.g. button text on the hero CTA). Must not darken. */
+    --stride-accent-soft: 208 50% 88%;
+
+    --stride-text-strong: 40 22% 92%;
+    --stride-text-muted: 213 14% 65%;
+
+    --stride-bg: 212 32% 6%;
+    --stride-bg-elev: 212 28% 10%;
+    --stride-border: 213 18% 18%;
+
+    --stride-cream: 40 22% 92%;
+    --stride-cream-warm: 38 25% 88%;
+    --stride-ink: 212 32% 6%;
+    --stride-ink-deep: 215 42% 3%;
+
+    --stride-sky: 208 50% 65%;
+    --stride-sky-soft: 208 50% 88%;
+    --stride-sky-tint: 208 30% 16%;
+
+    --stride-sage: 108 25% 60%;
+    --stride-sage-soft: 100 22% 80%;
+    --stride-sage-tint: 100 18% 14%;
+
+    --stride-gold: 42 75% 65%;
+    --stride-gold-soft: 42 60% 78%;
+
+    --stride-success: 135 38% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html, body {
+    @apply m-0 p-0 overflow-x-hidden;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  body {
+    background: hsl(var(--stride-bg));
+    color: hsl(var(--stride-text-strong));
+    font-family: 'Wix Madefor Text', ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.4s ease, color 0.4s ease;
+  }
+
+  /* Selection chrome inherits brand accent */
+  ::selection {
+    background: hsl(var(--stride-sky) / 0.25);
+    color: hsl(var(--stride-text-strong));
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Gloock', ui-serif, Georgia, serif;
+    font-weight: 400;
+    letter-spacing: -0.018em;
+  }
+}
+
+/* ============================================
+   STRIDE CUSTOM UTILITIES
+   ============================================ */
+
+.font-display {
+  font-family: 'Gloock', ui-serif, Georgia, serif;
+  letter-spacing: -0.022em;
+  font-weight: 400;
+}
+
+.section-container {
+  @apply w-full px-4 sm:px-6 lg:px-8 py-12;
+}
+
+.hover-lift {
+  @apply transition-transform duration-300;
+}
+.hover-lift:hover {
+  @apply transform -translate-y-1;
+}
+
+.smooth-scroll {
+  scroll-behavior: smooth;
+}
+
+/* ---------- Editorial text effects ---------- */
+
+.shine-text {
+  background: linear-gradient(120deg,
+    hsl(var(--stride-text-strong)) 0%,
+    hsl(var(--stride-sky)) 30%,
+    hsl(var(--stride-sage)) 55%,
+    hsl(var(--stride-text-strong)) 80%);
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 9s ease-in-out infinite;
+}
+
+.text-gold-gradient {
+  background: linear-gradient(110deg,
+    hsl(var(--stride-text-strong)) 0%,
+    hsl(var(--stride-gold)) 50%,
+    hsl(var(--stride-text-strong)) 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 7s linear infinite;
+}
+
+.stride-eyebrow {
+  display: inline-block;
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: hsl(var(--stride-text-muted));
+}
+
+.stride-gradient-bg {
+  background:
+    radial-gradient(closest-side at 100% 0%, hsl(var(--stride-sky-soft) / 0.55), transparent 70%),
+    radial-gradient(closest-side at 0% 100%, hsl(var(--stride-sage-soft) / 0.45), transparent 65%),
+    hsl(var(--stride-bg-elev));
+}
+
+/* Soft tinted card surfaces (POV Reports / Battle Pack style) */
+.card-tint-sky {
+  background:
+    linear-gradient(180deg, hsl(var(--stride-sky-tint)) 0%, hsl(var(--stride-bg-elev)) 100%);
+  border: 1px solid hsl(var(--stride-sky-soft) / 0.6);
+}
+.card-tint-sage {
+  background:
+    linear-gradient(180deg, hsl(var(--stride-sage-tint)) 0%, hsl(var(--stride-bg-elev)) 100%);
+  border: 1px solid hsl(var(--stride-sage-soft) / 0.7);
+}
+.card-tint-cream {
+  background: hsl(var(--stride-bg-elev));
+  border: 1px solid hsl(var(--stride-border));
+}
+
+/* Aurora wash — full-width gradient field for hero / dark sections */
+.aurora-wash {
+  background:
+    radial-gradient(60% 80% at 20% 30%, hsl(var(--stride-sky) / 0.35), transparent 60%),
+    radial-gradient(50% 70% at 80% 70%, hsl(var(--stride-sage) / 0.30), transparent 60%),
+    radial-gradient(45% 60% at 60% 20%, hsl(var(--stride-gold) / 0.22), transparent 60%),
+    hsl(var(--stride-navy));
+}
+
+.gold-spark {
+  background: radial-gradient(closest-side, hsl(var(--stride-gold) / 0.55), transparent 70%);
+}
+
+/* Banner styles */
+.banner-container {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.banner-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  text-align: center;
+  z-index: 10;
+}
+
+.banner-title {
+  font-family: 'Gloock', ui-serif, Georgia, serif;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 400;
+  margin-bottom: 1rem;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+}
+
+@media (min-width: 768px) {
+  .banner-title {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    margin-bottom: 1.5rem;
+  }
+}
+
+.banner-subtitle {
+  font-size: clamp(1rem, 2.5vw, 1.2rem);
+  max-width: 90%;
+  line-height: 1.5;
+}
+
+@media (min-width: 768px) {
+  .banner-subtitle {
+    max-width: 800px;
+  }
+}
+
+/* ============================================
+   MOTION PRIMITIVES — CSS LAYER
+   ============================================ */
+
+/* Word-by-word mask reveal, paired with the TextReveal React component */
+.reveal-line {
+  display: block;
+  overflow: hidden;
+  line-height: 1.05;
+}
+.reveal-word {
+  display: inline-block;
+  transform: translateY(110%);
+  opacity: 0;
+  transition:
+    transform 0.95s cubic-bezier(0.22, 0.85, 0.2, 1),
+    opacity 0.7s ease;
+}
+.reveal-word.is-in {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Magnetic / 3D tilt helpers (powered by React on top) */
+.tilt-card {
+  transform-style: preserve-3d;
+  transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: transform;
+}
+.tilt-card .tilt-inner {
+  transform: translateZ(40px);
+  transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.tilt-card:hover {
+  box-shadow:
+    0 28px 60px -28px hsl(var(--stride-sky) / 0.35),
+    0 14px 30px -16px hsl(var(--stride-sage) / 0.25);
+}
+
+/* Cursor spotlight — paints a soft radial light behind dark sections */
+.cursor-spotlight {
+  position: relative;
+  isolation: isolate;
+}
+.cursor-spotlight::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    600px circle at var(--mx, 50%) var(--my, 50%),
+    hsl(var(--stride-sky) / 0.18),
+    hsl(var(--stride-sage) / 0.08) 35%,
+    transparent 65%
+  );
+  z-index: 0;
+  transition: opacity 0.4s ease;
+}
+
+/* Beautiful animated underline (used on links) */
+.link-shimmer {
+  position: relative;
+  display: inline-block;
+}
+.link-shimmer::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    hsl(var(--stride-sky)) 30%,
+    hsl(var(--stride-sage)) 70%,
+    transparent);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.link-shimmer:hover::after {
+  transform: scaleX(1);
+}
+
+/* Soft glow halo on cards */
+.glow-card {
+  position: relative;
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+.glow-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg,
+    hsl(var(--stride-sky) / 0.6),
+    hsl(var(--stride-sage) / 0.6),
+    hsl(var(--stride-gold) / 0.4));
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+.glow-card:hover::before { opacity: 1; }
+.glow-card:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 24px 60px -28px hsl(var(--stride-sky) / 0.35),
+    0 10px 24px -14px hsl(var(--stride-sage) / 0.25);
+}
+
+/* ============================================
+   ANIMATIONS — KEYFRAMES
+   ============================================ */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes rotate-float {
+  0% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(10deg); }
+  100% { transform: translateY(0) rotate(0deg); }
+}
+
+@keyframes pulse-line {
+  0% { opacity: 0.3; stroke-width: 1px; }
+  50% { opacity: 1; stroke-width: 2px; }
+  100% { opacity: 0.3; stroke-width: 1px; }
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.04); }
+}
+
+@keyframes blob-float {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-2%, 2%, 0) scale(1.03); }
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes ringPulse {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--stride-sky) / 0.35); }
+  50% { box-shadow: 0 0 0 14px hsl(var(--stride-sky) / 0); }
+}
+
+@keyframes drawIn {
+  from { stroke-dashoffset: 200; opacity: 0; }
+  to { stroke-dashoffset: 0; opacity: 1; }
+}
+
+@keyframes meshShift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  33% { transform: translate3d(6%, -4%, 0) scale(1.12); }
+  66% { transform: translate3d(-5%, 5%, 0) scale(0.95); }
+}
+
+@keyframes spotlightMove {
+  0%, 100% { transform: translate3d(-12%, -8%, 0); }
+  50% { transform: translate3d(14%, 10%, 0); }
+}
+
+@keyframes gridDrift {
+  from { background-position: 0 0; }
+  to { background-position: 72px 72px; }
+}
+
+@keyframes waveDrift {
+  from { transform: translateX(0) translateY(0); }
+  to { transform: translateX(-25%) translateY(0); }
+}
+
+/* New aurora drift for the hero background */
+@keyframes auroraDrift {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+    filter: hue-rotate(0deg);
+  }
+  33% {
+    transform: translate3d(-3%, 4%, 0) rotate(2deg) scale(1.08);
+    filter: hue-rotate(-8deg);
+  }
+  66% {
+    transform: translate3d(4%, -3%, 0) rotate(-2deg) scale(0.96);
+    filter: hue-rotate(8deg);
+  }
+}
+
+/* Soft pulse for badges / numbers */
+@keyframes softPulse {
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 1; }
+}
+
+/* Sheen sweep for buttons */
+@keyframes sheen {
+  0% { transform: translateX(-150%) skewX(-12deg); }
+  100% { transform: translateX(250%) skewX(-12deg); }
+}
+
+.animate-mesh { animation: meshShift 18s ease-in-out infinite; }
+.animate-spotlight { animation: spotlightMove 16s ease-in-out infinite; }
+.animate-grid-drift { animation: gridDrift 8s linear infinite; }
+.animate-wave-drift { animation: waveDrift 14s linear infinite; }
+.animate-aurora-drift { animation: auroraDrift 22s ease-in-out infinite; }
+.animate-soft-pulse { animation: softPulse 3.4s ease-in-out infinite; }
+
+.animation-delay-100 { animation-delay: 100ms !important; }
+.animation-delay-200 { animation-delay: 200ms !important; }
+.animation-delay-300 { animation-delay: 300ms !important; }
+.animation-delay-400 { animation-delay: 400ms !important; }
+.animation-delay-500 { animation-delay: 500ms !important; }
+.animation-delay-700 { animation-delay: 700ms !important; }
+
+.animate-float { animation: float 6s ease-in-out infinite; }
+.animate-circle { animation: float 6s ease-in-out infinite; }
+.animate-line { animation: pulse-line 4s ease-in-out infinite; }
+.animate-rotate { animation: rotate 20s linear infinite; }
+.animate-fade-in { animation: fadeIn 0.8s ease-out forwards; }
+.animate-slide-in { animation: slideIn 0.6s ease-out forwards; }
+.animate-pulse-slow { animation: pulse-slow 4s ease-in-out infinite; }
+.animate-blob { animation: blob-float 22s ease-in-out infinite; }
+.animate-marquee { animation: marquee 40s linear infinite; }
+.animate-marquee-slow { animation: marquee 60s linear infinite; }
+.animate-marquee-reverse { animation: marquee 40s linear infinite reverse; }
+.animate-ring-pulse { animation: ringPulse 2.4s ease-in-out infinite; }
+
+/* Button with travelling sheen — wrap label in .btn-sheen */
+.btn-sheen { position: relative; overflow: hidden; isolation: isolate; }
+.btn-sheen::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg,
+    transparent,
+    hsl(var(--stride-cream) / 0.5),
+    transparent);
+  transform: translateX(-150%) skewX(-12deg);
+  z-index: 1;
+  pointer-events: none;
+}
+.btn-sheen:hover::after {
+  animation: sheen 0.95s ease-out forwards;
+}
+
+/* Hover animations */
+.hover-underline { position: relative; }
+.hover-underline:after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: -2px;
+  left: 0;
+  background-color: currentColor;
+  transition: width 0.3s ease;
+}
+.hover-underline:hover:after { width: 100%; }
+
+.hover-scale { transition: transform 0.3s ease; }
+.hover-scale:hover { transform: scale(1.05); }
+
+/* ============================================
+   SCROLL REVEAL
+   ============================================ */
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.9s cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: opacity, transform;
+}
+.reveal-on-scroll.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-on-scroll.from-left { transform: translateX(-32px); }
+.reveal-on-scroll.from-left.is-visible { transform: translateX(0); }
+.reveal-on-scroll.from-right { transform: translateX(32px); }
+.reveal-on-scroll.from-right.is-visible { transform: translateX(0); }
+.reveal-on-scroll.scale-up { transform: scale(0.92); }
+.reveal-on-scroll.scale-up.is-visible { transform: scale(1); }
+.reveal-on-scroll.delay-1 { transition-delay: 0.1s; }
+.reveal-on-scroll.delay-2 { transition-delay: 0.2s; }
+.reveal-on-scroll.delay-3 { transition-delay: 0.3s; }
+.reveal-on-scroll.delay-4 { transition-delay: 0.4s; }
+.reveal-on-scroll.delay-5 { transition-delay: 0.5s; }
+
+/* ============================================
+   REDUCED MOTION
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee,
+  .animate-marquee-reverse,
+  .animate-marquee-slow,
+  .animate-blob,
+  .animate-float,
+  .animate-pulse-slow,
+  .animate-ring-pulse,
+  .animate-mesh,
+  .animate-spotlight,
+  .animate-grid-drift,
+  .animate-wave-drift,
+  .animate-aurora-drift,
+  .animate-soft-pulse,
+  .animate-rotate,
+  .shine-text,
+  .text-gold-gradient {
+    animation: none !important;
+  }
+  .reveal-on-scroll,
+  .reveal-word {
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .tilt-card,
+  .tilt-card .tilt-inner {
+    transition: none !important;
+    transform: none !important;
+  }
+}

@@ -1,0 +1,231 @@
+import { useEffect, useState } from 'react';
+import { ArrowRight, MessageSquare } from 'lucide-react';
+
+const HEADLINE_SIZE: Record<'sm' | 'md' | 'lg' | 'xl', string> = {
+  sm: 'text-3xl sm:text-4xl lg:text-5xl',
+  md: 'text-4xl sm:text-5xl lg:text-6xl',
+  lg: 'text-5xl sm:text-6xl lg:text-7xl xl:text-[5.25rem]',
+  xl: 'text-6xl sm:text-7xl lg:text-8xl xl:text-[6.5rem]',
+};
+import { Link } from 'react-router-dom';
+import { hero, marqueeStats } from '@/data/stride';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
+import { useTheme } from '@/hooks/useTheme';
+import FluidShader from '@/components/ui/fluid-shader';
+import TextReveal from '@/components/motion/TextReveal';
+import MagneticButton from '@/components/motion/MagneticButton';
+import CountUp from '@/components/motion/CountUp';
+
+/**
+ * "Fluid" hero — the new flagship.
+ *
+ *   - WebGL2 fluid/aurora shader background, cursor-reactive
+ *   - Word-by-word mask reveal on the headline
+ *   - Magnetic CTA buttons
+ *   - Live-counting stat strip on cream surface beneath the dark hero
+ */
+const HeroFluid = () => {
+  const { settings } = useSiteSettings();
+  const { theme } = useTheme();
+  const [reduced, setReduced] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReduced(mq.matches);
+    const onChange = () => setReduced(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
+  // Palette — RGB triplets, kept slightly different per theme so the shader
+  // reads beautifully in both. (Same hues, deeper in dark mode.)
+  const palette =
+    theme === 'dark'
+      ? {
+          a: [0.42, 0.62, 0.78] as [number, number, number],
+          b: [0.55, 0.70, 0.55] as [number, number, number],
+          c: [0.90, 0.78, 0.45] as [number, number, number],
+          bg: [0.018, 0.030, 0.055] as [number, number, number],
+        }
+      : {
+          a: [0.36, 0.58, 0.74] as [number, number, number],
+          b: [0.49, 0.66, 0.49] as [number, number, number],
+          c: [0.86, 0.74, 0.43] as [number, number, number],
+          bg: [0.04, 0.06, 0.10] as [number, number, number],
+        };
+
+  // Parse the headline. Split on em-dash so we can highlight the second half.
+  const fullHeadline = settings.heroHeadline || hero.title;
+  const parts = fullHeadline.split('—');
+  const headlineLead = parts[0]?.trim() ?? fullHeadline;
+  const headlineTail = parts[1]?.trim() ?? '';
+
+  return (
+    <section className="relative w-full min-h-[100svh] flex flex-col bg-stride-ink overflow-hidden">
+      {/* ---------- WebGL fluid background ---------- */}
+      <div className="absolute inset-0 z-0">
+        {!reduced && (
+          <FluidShader
+            colorA={palette.a}
+            colorB={palette.b}
+            colorC={palette.c}
+            bg={palette.bg}
+            speed={0.45}
+          />
+        )}
+        {reduced && (
+          <div className="absolute inset-0 aurora-wash" aria-hidden="true" />
+        )}
+        {/* Soft top vignette so the navbar reads cleanly */}
+        <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-stride-ink-deep/85 to-transparent" />
+        {/* Bottom fade into the cream stat strip */}
+        <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-stride-cream/95 to-transparent" />
+        {/* Subtle film grain — keeps the gradient from looking plastic */}
+        <div
+          className="absolute inset-0 opacity-[0.06] mix-blend-overlay pointer-events-none"
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.65'/></svg>\")",
+          }}
+          aria-hidden="true"
+        />
+      </div>
+
+      {/* ---------- Headline content ---------- */}
+      <div className="relative z-10 flex-1 flex items-center">
+        <div
+          className={`w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24 md:py-32 ${
+            settings.heroAlign === 'center' ? 'text-center' : ''
+          }`}
+        >
+          <div className={`max-w-3xl ${settings.heroAlign === 'center' ? 'mx-auto' : ''}`}>
+            {/* Headline — kinetic word reveal, two halves so we can color the tail */}
+            <h1
+              className={`font-display leading-[1.02] tracking-tight ${HEADLINE_SIZE[settings.heroHeadlineSize]}`}
+              style={{ color: settings.heroHeadlineColor }}
+            >
+              <TextReveal
+                as="span"
+                text={headlineLead}
+                className="block"
+                staggerMs={75}
+                initialDelayMs={150}
+                immediate
+              />
+              {headlineTail && (
+                <TextReveal
+                  as="span"
+                  text={headlineTail}
+                  className="block text-gold-gradient"
+                  staggerMs={75}
+                  initialDelayMs={500}
+                  immediate
+                />
+              )}
+            </h1>
+
+            <p
+              className={`mt-8 max-w-xl text-lg leading-relaxed border-l-2 border-stride-gold/60 pl-5 ${
+                settings.heroAlign === 'center' ? 'mx-auto border-l-0 pl-0' : ''
+              }`}
+              style={{ color: settings.heroSubheadColor }}
+            >
+              {settings.heroSubhead}
+            </p>
+
+            <p className="mt-5 max-w-xl text-sm text-stride-cream/60 leading-relaxed">
+              {hero.description}
+            </p>
+
+            {/* CTAs — primary magnetic, secondary subtle glass */}
+            <div
+              className={`mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center ${
+                settings.heroAlign === 'center' ? 'justify-center' : ''
+              }`}
+            >
+              <MagneticButton
+                href="/contact"
+                strength={0.4}
+                className="btn-sheen min-h-[54px] px-8 py-4 bg-stride-cream text-stride-ink rounded-full shadow-2xl hover:shadow-[0_20px_60px_-20px_rgba(0,0,0,0.6)] text-sm sm:text-base font-semibold tracking-tight"
+              >
+                <span className="relative z-[2] inline-flex items-center gap-2">
+                  {hero.ctaLabel}
+                  <ArrowRight className="w-4 h-4" />
+                </span>
+              </MagneticButton>
+
+              <MagneticButton
+                href="#capabilities"
+                strength={0.3}
+                className="min-h-[54px] px-8 py-4 rounded-full text-stride-cream border border-stride-cream/25 bg-stride-cream/5 hover:bg-stride-cream/15 backdrop-blur-md text-sm sm:text-base font-medium"
+              >
+                <span className="inline-flex items-center gap-2">
+                  {hero.secondaryLabel}
+                  <MessageSquare className="w-4 h-4" />
+                </span>
+              </MagneticButton>
+            </div>
+
+            {/* Sparks row — small visual proof */}
+            <div
+              className={`mt-12 flex flex-wrap items-center gap-x-7 gap-y-2 text-stride-cream/55 text-xs ${
+                settings.heroAlign === 'center' ? 'justify-center' : ''
+              }`}
+            >
+              {['60+ clients', '16 African countries', '9 AI products shipped'].map((t) => (
+                <span key={t} className="flex items-center gap-1.5">
+                  <span className="w-1 h-1 rounded-full bg-stride-sage" />
+                  {t}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ---------- Stat strip on cream ---------- */}
+      <div className="relative z-10 bg-stride-cream border-y border-stride-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-7">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
+            {marqueeStats.map((s) => {
+              // Extract a numeric end value from strings like "60+", "R200M+", "16"
+              const m = s.strong.match(/(\d+(?:[.,]\d+)?)/);
+              const numeric = m ? parseFloat(m[1].replace(',', '')) : 0;
+              const prefix = m ? s.strong.slice(0, m.index) : '';
+              const suffix = m ? s.strong.slice((m.index ?? 0) + m[0].length) : '';
+              return (
+                <div key={s.label} className="group">
+                  <div className="font-display text-2xl sm:text-3xl text-stride-ink tracking-tight leading-none">
+                    {numeric > 0 ? (
+                      <CountUp
+                        to={numeric}
+                        duration={1800}
+                        prefix={prefix}
+                        suffix={suffix}
+                      />
+                    ) : (
+                      s.strong
+                    )}
+                  </div>
+                  <div className="mt-1.5 text-[11px] uppercase tracking-[0.18em] text-stride-text-muted group-hover:text-stride-sky transition-colors">
+                    {s.label}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Scroll cue */}
+      <div className="absolute z-20 left-1/2 -translate-x-1/2 pointer-events-none" style={{ bottom: 'calc(76px + 1.25rem)' }}>
+        <span className="flex flex-col items-center gap-2 text-stride-cream/40 text-[10px] uppercase tracking-[0.28em]">
+          Scroll
+          <span className="w-px h-8 bg-gradient-to-b from-stride-cream/40 to-transparent" />
+        </span>
+      </div>
+    </section>
+  );
+};
+
+export default HeroFluid;
