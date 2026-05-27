@@ -12,19 +12,20 @@ import {
   AlertTriangle,
   Loader2,
   ArrowUpRight,
+  Check,
 } from 'lucide-react';
 import SEO from '@/components/SEO';
 import ThemeToggle from '@/components/ThemeToggle';
 import Logo from '@/components/Logo';
-import { Image as ImageIcon } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useSiteSettings, DEFAULT_SETTINGS, HERO_TEMPLATES } from '@/hooks/useSiteSettings';
 import { useSiteContent } from '@/hooks/useSiteContent';
-import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
+import { getSupabase } from '@/lib/supabase';
 import { showcase, posts } from '@/data/stride';
 import AnalyticsPanel from '@/components/admin/AnalyticsPanel';
 import ContentPanel from '@/components/admin/ContentPanel';
-import ImageUpload from '@/components/admin/ImageUpload';
+import LandingSettingsPanel from '@/components/admin/LandingSettingsPanel';
+import MessagesPanel from '@/components/admin/MessagesPanel';
+import PeoplePanel from '@/components/admin/PeoplePanel';
 
 const stat = (label: string, value: string | number, icon: React.ReactNode, hint?: string) => ({
   label,
@@ -33,381 +34,15 @@ const stat = (label: string, value: string | number, icon: React.ReactNode, hint
   hint,
 });
 
-/* ---- Landing-page settings panel ---- */
-const LandingSettingsPanel = () => {
-  const { settings, updateSettings, resetSettings, saving } = useSiteSettings();
-  const [draft, setDraft] = useState(settings);
-  const [savedFlash, setSavedFlash] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setDraft(settings);
-  }, [settings]);
-
-  const dirty = JSON.stringify(draft) !== JSON.stringify(settings);
-
-  const save = async () => {
-    setSaveError(null);
-    try {
-      await updateSettings(draft);
-      setSavedFlash(true);
-      setTimeout(() => setSavedFlash(false), 2600);
-    } catch (e: any) {
-      setSaveError(
-        e?.message ||
-          'Could not save to Supabase. The change is kept in this browser. Run supabase/migration.sql so the site_settings table accepts admin writes.'
-      );
-    }
-  };
-
-  return (
-    <div className="grid lg:grid-cols-2 gap-5">
-      {/* Editor */}
-      <div className="bg-stride-bg-elev border border-stride-border rounded-2xl p-6 space-y-5">
-        <div className="flex items-center gap-2">
-          <ImageIcon className="w-5 h-5 text-stride-accent" />
-          <h3 className="font-display text-xl text-stride-text-strong tracking-tight">
-            Landing hero
-          </h3>
-        </div>
-
-        {/* Template picker */}
-        <div>
-          <span className="text-sm font-medium text-stride-text-strong">Template</span>
-          <p className="text-xs text-stride-text-muted mb-2.5">
-            Pick the look for the top of the landing page.
-          </p>
-          <div className="grid grid-cols-2 gap-2.5">
-            {HERO_TEMPLATES.map((tpl) => {
-              const active = draft.heroTemplate === tpl.id;
-              const swatch: Record<string, string> = {
-                fluid: 'from-stride-ink via-stride-sky/60 to-stride-sage/60',
-                classic: 'from-stride-ink via-stride-ink-deep to-stride-sage/40',
-                aurora: 'from-stride-ink via-stride-sage to-stride-sky',
-                lines: 'from-stride-ink-deep via-stride-sky to-stride-sky/40',
-                spectrum: 'from-stride-sky/60 via-stride-ink to-stride-gold/40',
-                mesh: 'from-stride-ink via-stride-sky/60 to-stride-sage/50',
-                grid: 'from-stride-ink-deep via-stride-ink to-stride-sky/30',
-                spotlight: 'from-stride-ink-deep via-stride-sky/40 to-stride-ink-deep',
-                waves: 'from-stride-ink via-stride-sage/50 to-stride-sky/40',
-                orbit: 'from-stride-ink via-stride-ink-deep to-stride-gold/30',
-                minimal: 'from-stride-ink via-stride-ink-deep to-stride-ink',
-              };
-              return (
-                <button
-                  key={tpl.id}
-                  type="button"
-                  onClick={() => setDraft({ ...draft, heroTemplate: tpl.id })}
-                  className={`text-left rounded-xl border p-3 transition-all ${
-                    active
-                      ? 'border-stride-accent ring-2 ring-stride-accent/40 bg-stride-accent/5'
-                      : 'border-stride-border hover:border-stride-accent/50'
-                  }`}
-                >
-                  <div
-                    className={`h-14 rounded-md bg-gradient-to-br ${swatch[tpl.id]} mb-2 relative overflow-hidden`}
-                  >
-                    {tpl.id === 'lines' && (
-                      <div className="absolute inset-0 opacity-60" style={{ background: 'repeating-linear-gradient(90deg, transparent 0 6px, rgba(120,170,255,0.5) 6px 7px)' }} />
-                    )}
-                    {tpl.id === 'classic' && (
-                      <div className="absolute right-2 top-2 bottom-2 w-8 rounded bg-white/25" />
-                    )}
-                    {(tpl.id === 'grid' || tpl.id === 'spotlight') && (
-                      <div
-                        className="absolute inset-0 opacity-40"
-                        style={{
-                          backgroundImage:
-                            'linear-gradient(rgba(255,255,255,0.4) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.4) 1px,transparent 1px)',
-                          backgroundSize: '12px 12px',
-                        }}
-                      />
-                    )}
-                    {tpl.id === 'orbit' && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-9 h-9 rounded-full border border-white/40" />
-                        <div className="absolute w-5 h-5 rounded-full border border-white/30" />
-                      </div>
-                    )}
-                    {tpl.id === 'waves' && (
-                      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-white/15 rounded-t-[100%]" />
-                    )}
-                  </div>
-                  <p className="text-sm font-semibold text-stride-text-strong flex items-center gap-1.5">
-                    {tpl.name}
-                    {active && <span className="text-stride-accent text-xs">● live</span>}
-                  </p>
-                  <p className="text-[11px] text-stride-text-muted leading-snug mt-0.5">
-                    {tpl.description}
-                  </p>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div>
-          <span className="text-sm font-medium text-stride-text-strong block mb-2">
-            Hero image
-            {draft.heroTemplate !== 'classic' && (
-              <span className="text-stride-text-muted font-normal">
-                {' '}— used by the Classic template
-              </span>
-            )}
-          </span>
-          <ImageUpload
-            value={draft.heroImageUrl}
-            onChange={(url) => setDraft({ ...draft, heroImageUrl: url })}
-            folder="hero"
-          />
-        </div>
-
-        <label className="block">
-          <span className="text-sm font-medium text-stride-text-strong">Headline</span>
-          <textarea
-            value={draft.heroHeadline}
-            onChange={(e) => setDraft({ ...draft, heroHeadline: e.target.value })}
-            rows={2}
-            className="mt-1 w-full px-3 py-2.5 rounded-md border border-stride-border bg-stride-bg-elev text-stride-text-strong focus:outline-none focus:ring-2 focus:ring-stride-accent text-sm resize-none"
-          />
-        </label>
-
-        <label className="block">
-          <span className="text-sm font-medium text-stride-text-strong">Sub-headline</span>
-          <textarea
-            value={draft.heroSubhead}
-            onChange={(e) => setDraft({ ...draft, heroSubhead: e.target.value })}
-            rows={3}
-            className="mt-1 w-full px-3 py-2.5 rounded-md border border-stride-border bg-stride-bg-elev text-stride-text-strong focus:outline-none focus:ring-2 focus:ring-stride-accent text-sm resize-none"
-          />
-        </label>
-
-        {/* Style controls — colour, alignment, headline size, overlay */}
-        <div className="border-t border-stride-border pt-4 space-y-4">
-          <p className="text-xs uppercase tracking-wider text-stride-text-muted font-semibold">
-            Style — applies to the selected template
-          </p>
-
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block">
-              <span className="text-sm font-medium text-stride-text-strong">Alignment</span>
-              <div className="mt-1 inline-flex rounded-md border border-stride-border bg-stride-bg-elev p-0.5 w-full">
-                {(['left', 'center'] as const).map((a) => (
-                  <button
-                    key={a}
-                    type="button"
-                    onClick={() => setDraft({ ...draft, heroAlign: a })}
-                    className={`flex-1 px-3 py-1.5 rounded text-sm capitalize transition-colors ${
-                      draft.heroAlign === a
-                        ? 'bg-stride-navy text-white'
-                        : 'text-stride-text-strong hover:bg-stride-bg'
-                    }`}
-                  >
-                    {a}
-                  </button>
-                ))}
-              </div>
-            </label>
-
-            <label className="block">
-              <span className="text-sm font-medium text-stride-text-strong">Headline size</span>
-              <select
-                value={draft.heroHeadlineSize}
-                onChange={(e) =>
-                  setDraft({ ...draft, heroHeadlineSize: e.target.value as any })
-                }
-                className="mt-1 w-full px-3 py-2 rounded-md border border-stride-border bg-stride-bg-elev text-stride-text-strong focus:outline-none focus:ring-2 focus:ring-stride-accent text-sm"
-              >
-                <option value="sm">Small</option>
-                <option value="md">Medium</option>
-                <option value="lg">Large</option>
-                <option value="xl">Extra large</option>
-              </select>
-            </label>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block">
-              <span className="text-sm font-medium text-stride-text-strong">Headline colour</span>
-              <div className="mt-1 flex gap-2 items-center">
-                <input
-                  type="color"
-                  value={draft.heroHeadlineColor}
-                  onChange={(e) => setDraft({ ...draft, heroHeadlineColor: e.target.value })}
-                  className="h-9 w-12 rounded border border-stride-border bg-stride-bg-elev cursor-pointer"
-                />
-                <input
-                  value={draft.heroHeadlineColor}
-                  onChange={(e) => setDraft({ ...draft, heroHeadlineColor: e.target.value })}
-                  className="flex-1 px-2 py-2 rounded-md border border-stride-border bg-stride-bg-elev text-stride-text-strong focus:outline-none focus:ring-2 focus:ring-stride-accent text-xs font-mono"
-                />
-              </div>
-            </label>
-            <label className="block">
-              <span className="text-sm font-medium text-stride-text-strong">Sub-headline colour</span>
-              <div className="mt-1 flex gap-2 items-center">
-                <input
-                  type="color"
-                  value={draft.heroSubheadColor}
-                  onChange={(e) => setDraft({ ...draft, heroSubheadColor: e.target.value })}
-                  className="h-9 w-12 rounded border border-stride-border bg-stride-bg-elev cursor-pointer"
-                />
-                <input
-                  value={draft.heroSubheadColor}
-                  onChange={(e) => setDraft({ ...draft, heroSubheadColor: e.target.value })}
-                  className="flex-1 px-2 py-2 rounded-md border border-stride-border bg-stride-bg-elev text-stride-text-strong focus:outline-none focus:ring-2 focus:ring-stride-accent text-xs font-mono"
-                />
-              </div>
-            </label>
-          </div>
-
-          <label className="block">
-            <span className="text-sm font-medium text-stride-text-strong">
-              Background overlay darkness · {Math.round(draft.heroOverlayOpacity * 100)}%
-            </span>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              value={Math.round(draft.heroOverlayOpacity * 100)}
-              onChange={(e) =>
-                setDraft({ ...draft, heroOverlayOpacity: Number(e.target.value) / 100 })
-              }
-              className="mt-2 w-full accent-stride-accent"
-            />
-          </label>
-        </div>
-
-        <div className="flex items-center gap-3 pt-1">
-          <button
-            onClick={save}
-            disabled={saving}
-            className="px-5 py-2.5 rounded-lg bg-stride-navy text-white font-medium hover:bg-stride-navy-dark transition-colors disabled:opacity-60 inline-flex items-center gap-2"
-          >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-            {dirty ? 'Save changes' : 'Saved'}
-          </button>
-          <button
-            onClick={() => {
-              resetSettings();
-              setDraft(DEFAULT_SETTINGS);
-            }}
-            className="px-4 py-2.5 rounded-lg text-stride-text-muted hover:bg-stride-bg text-sm transition-colors"
-          >
-            Reset to default
-          </button>
-          {savedFlash && (
-            <span className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">
-              Saved ✓
-            </span>
-          )}
-        </div>
-        {saveError && (
-          <p className="text-xs text-amber-600 dark:text-amber-400 leading-relaxed">{saveError}</p>
-        )}
-        {!isSupabaseConfigured() && (
-          <p className="text-xs text-stride-text-muted">
-            Saved to this browser. Configure Supabase (with the <code className="font-mono">site_settings</code>{' '}
-            table) to make changes global across all visitors.
-          </p>
-        )}
-      </div>
-
-      {/* Live preview */}
-      <div className="bg-stride-bg-elev border border-stride-border rounded-2xl p-6">
-        <h3 className="font-display text-xl text-stride-text-strong tracking-tight mb-4">
-          Live preview
-        </h3>
-        {(() => {
-          const isClassic = draft.heroTemplate === 'classic';
-          const shaderBg: Record<string, string> = {
-            fluid: 'from-stride-ink via-stride-sky/60 to-stride-sage/60',
-            aurora: 'from-stride-ink via-stride-sage to-stride-sky',
-            lines: 'from-stride-ink-deep via-stride-sky to-stride-sky/40',
-            spectrum: 'from-stride-sky/60 via-stride-ink to-stride-gold/40',
-            mesh: 'from-stride-ink via-stride-sky/60 to-stride-sage/50',
-            grid: 'from-stride-ink-deep via-stride-ink to-stride-sky/30',
-            spotlight: 'from-stride-ink-deep via-stride-sky/40 to-stride-ink-deep',
-            waves: 'from-stride-ink via-stride-sage/50 to-stride-sky/40',
-            orbit: 'from-stride-ink via-stride-ink-deep to-stride-gold/30',
-            minimal: 'from-stride-ink via-stride-ink-deep to-stride-ink',
-          };
-          return (
-            <div className="relative rounded-xl overflow-hidden aspect-[16/10] bg-stride-navy">
-              {isClassic && draft.heroImageUrl && (
-                <img
-                  src={draft.heroImageUrl}
-                  alt="Hero preview"
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-              )}
-              {isClassic ? (
-                <div className="absolute inset-0 bg-gradient-to-br from-stride-navy/97 via-stride-navy/88 to-stride-navy/72" />
-              ) : (
-                <div
-                  className={`absolute inset-0 bg-gradient-to-br ${shaderBg[draft.heroTemplate]}`}
-                >
-                  {draft.heroTemplate === 'lines' && (
-                    <div
-                      className="absolute inset-0 opacity-50"
-                      style={{
-                        background:
-                          'repeating-linear-gradient(95deg, transparent 0 10px, rgba(120,170,255,0.5) 10px 12px)',
-                      }}
-                    />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-b from-stride-navy/40 to-stride-navy/70" />
-                </div>
-              )}
-              <div
-                className={`relative h-full flex flex-col justify-center p-6 ${
-                  draft.heroAlign === 'center' ? 'items-center text-center' : 'items-start text-left'
-                }`}
-              >
-                <h4
-                  className={`font-display leading-tight mb-2 line-clamp-3 ${
-                    draft.heroHeadlineSize === 'sm'
-                      ? 'text-base'
-                      : draft.heroHeadlineSize === 'md'
-                      ? 'text-lg'
-                      : draft.heroHeadlineSize === 'xl'
-                      ? 'text-2xl'
-                      : 'text-xl'
-                  } ${draft.heroAlign === 'left' ? '' : 'max-w-md'}`}
-                  style={{ color: draft.heroHeadlineColor }}
-                >
-                  {draft.heroHeadline || 'Headline preview'}
-                </h4>
-                <p
-                  className={`text-xs line-clamp-3 max-w-sm ${
-                    draft.heroAlign === 'left' ? 'border-l-2 border-stride-accent-soft pl-2' : ''
-                  }`}
-                  style={{ color: draft.heroSubheadColor, opacity: 0.85 }}
-                >
-                  {draft.heroSubhead || 'Sub-headline preview'}
-                </p>
-                <span className="mt-3 inline-block text-[10px] uppercase tracking-wider text-stride-accent-soft/80">
-                  {draft.heroTemplate} template
-                </span>
-              </div>
-            </div>
-          );
-        })()}
-        <p className="text-xs text-stride-text-muted mt-3">
-          Static preview — the live shaders animate on the actual page. Changes apply site-wide on save.
-        </p>
-      </div>
-    </div>
-  );
-};
-
 const Admin = () => {
   const { user, isAdmin, loading, configured, signOut } = useAuth();
   const navigate = useNavigate();
   const [enrolling, setEnrolling] = useState(false);
   const [enrollError, setEnrollError] = useState<string | null>(null);
   const { content } = useSiteContent();
-  const [tab, setTab] = useState<'overview' | 'analytics' | 'landing' | 'content'>('overview');
+  const [tab, setTab] = useState<
+    'overview' | 'analytics' | 'landing' | 'content' | 'messages' | 'people'
+  >('overview');
 
   useEffect(() => {
     if (!loading && configured && !user) {
@@ -587,16 +222,16 @@ const Admin = () => {
           ))}
         </div>
 
-        {/* Tabs */}
-        <div className="flex flex-wrap gap-2 mb-6 border-b border-stride-border">
-          {(['overview', 'analytics', 'landing', 'content'] as const).map((t) => (
+        {/* Tabs — pill style, modern */}
+        <div className="inline-flex bg-stride-bg-elev border border-stride-border rounded-full p-1 mb-8 shadow-sm">
+          {(['overview', 'analytics', 'landing', 'content', 'messages', 'people'] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-4 py-2.5 -mb-px text-sm font-medium border-b-2 transition-colors capitalize ${
+              className={`px-4 sm:px-5 py-2 rounded-full text-sm font-medium transition-all capitalize ${
                 tab === t
-                  ? 'border-stride-navy text-stride-text-strong'
-                  : 'border-transparent text-stride-text-muted hover:text-stride-text-strong'
+                  ? 'bg-stride-navy text-white shadow-md'
+                  : 'text-stride-text-muted hover:text-stride-text-strong'
               }`}
             >
               {t}
@@ -705,6 +340,10 @@ const Admin = () => {
         {tab === 'landing' && <LandingSettingsPanel />}
 
         {tab === 'content' && <ContentPanel />}
+
+        {tab === 'messages' && <MessagesPanel />}
+
+        {tab === 'people' && <PeoplePanel />}
       </main>
     </div>
   );

@@ -3,21 +3,16 @@ import { Eye, BrainCircuit, Compass, ArrowRight, MessageSquare } from 'lucide-re
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Button } from '@/components/ui/button';
 import { useScrollHijack } from '@/hooks/useScrollHijack';
 import { capabilities, problem } from '@/data/stride';
 import { useSiteContent } from '@/hooks/useSiteContent';
+import SectionEyebrow from '@/components/SectionEyebrow';
+import NeuralBackground from '@/components/ui/neural-background';
 
 const ICONS = [
   <Eye className="w-10 h-10 text-white transition-transform duration-300 transform" key="eye" />,
   <BrainCircuit className="w-10 h-10 text-white transition-transform duration-300 transform" key="brain" />,
   <Compass className="w-10 h-10 text-white transition-transform duration-300 transform" key="compass" />,
-];
-
-const HERO_IMAGES = [
-  '/lovable-uploads/48e540e5-6a25-44e4-b3f7-80f3bfc2777a.png',
-  '/lovable-uploads/48ecf6e2-5a98-4a9d-af6f-ae2265cd4098.png',
-  '/lovable-uploads/cf8966e3-de0d-445f-9fbd-ee6c48daa7ff.png',
 ];
 
 const Features = () => {
@@ -32,20 +27,11 @@ const Features = () => {
     icon: ICONS[i],
     title: item.title,
     description: item.body,
-    image: HERO_IMAGES[i],
     n: item.n,
     tags: item.tags,
   }));
 
   const { isHijacked, currentIndex } = useScrollHijack(hijackSectionRef, features.length);
-
-  const scrollToContact = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const contactSection = document.getElementById('contact');
-    if (contactSection) {
-      contactSection.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -80,7 +66,8 @@ const Features = () => {
       >
         <div className="w-full px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto" ref={featuresRef}>
           <div className="text-center mb-12 max-w-3xl mx-auto feature-item">
-            <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl text-stride-text-strong mb-4 tracking-tight">
+            <SectionEyebrow>How we work</SectionEyebrow>
+            <h2 className="mt-3 font-display text-3xl sm:text-4xl lg:text-5xl text-stride-text-strong mb-4 tracking-tight">
               {caps.capabilitiesTitle}
             </h2>
             <p className="text-stride-text-muted text-base sm:text-lg leading-relaxed">
@@ -124,22 +111,29 @@ const Features = () => {
                 onMouseLeave={() => !isHijacked && setHoveredFeature(null)}
               >
                 <div className="absolute inset-0 w-full h-full">
-                  <img
-                    src={feature.image}
-                    alt={feature.title}
-                    className={cn(
-                      'w-full h-full object-cover transition-all duration-300',
-                      isHijacked ? 'grayscale-0' : 'grayscale'
-                    )}
-                  />
+                  {/* Neural particle field — masked so it only paints the
+                      left/right edges and fades out in the middle, where text
+                      sits. Cursor-reactive, theme-aware (blue/gold). */}
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      WebkitMaskImage:
+                        'linear-gradient(90deg, #000 0%, #000 18%, rgba(0,0,0,0.06) 50%, #000 82%, #000 100%)',
+                      maskImage:
+                        'linear-gradient(90deg, #000 0%, #000 18%, rgba(0,0,0,0.06) 50%, #000 82%, #000 100%)',
+                    }}
+                  >
+                    <NeuralBackground particleCount={260} speed={0.7} />
+                  </div>
+                  {/* Tint over everything for text legibility */}
                   <div
                     className={cn(
-                      'absolute inset-0 transition-opacity duration-300',
+                      'absolute inset-0 transition-opacity duration-300 pointer-events-none',
                       isHijacked
-                        ? 'bg-stride-navy/60'
+                        ? 'bg-stride-navy/70'
                         : hoveredFeature === index
-                          ? 'bg-stride-navy/70'
-                          : 'bg-stride-navy/85'
+                          ? 'bg-stride-navy/65'
+                          : 'bg-stride-navy/75'
                     )}
                   />
                 </div>
@@ -227,18 +221,19 @@ const Features = () => {
         </div>
 
         <div className="text-center mt-14 flex flex-col sm:flex-row justify-center items-center space-y-3 sm:space-y-0 sm:space-x-3 px-4">
-          <Button
-            onClick={scrollToContact}
-            className="inline-flex items-center px-6 py-3 bg-stride-navy hover:bg-stride-navy-dark text-white rounded-lg shadow-md hover:shadow-lg transition-all group w-full sm:w-auto"
+          <Link
+            to="/contact"
+            onClick={() => window.scrollTo(0, 0)}
+            className="inline-flex items-center justify-center px-6 py-3 bg-stride-ink hover:bg-stride-ink-deep text-stride-cream rounded-full shadow-md hover:shadow-xl transition-all group w-full sm:w-auto font-semibold"
           >
             Start a conversation
             <MessageSquare className="ml-2 w-4 h-4 group-hover:animate-pulse" />
-          </Button>
+          </Link>
 
           <Link
             to="/about"
             onClick={() => window.scrollTo(0, 0)}
-            className="inline-flex items-center px-6 py-3 bg-white text-stride-navy rounded-lg border border-stride-border hover:bg-stride-accent-soft transition-all group w-full sm:w-auto justify-center font-medium"
+            className="inline-flex items-center px-6 py-3 bg-stride-bg-elev text-stride-ink rounded-full border border-stride-border hover:bg-stride-sage-tint hover:border-stride-sage/40 transition-all group w-full sm:w-auto justify-center font-medium"
           >
             Learn how we work
             <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -250,7 +245,8 @@ const Features = () => {
       <section className="bg-stride-bg py-14 md:py-20">
         <div className="w-full px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
           <div className="text-center mb-12 reveal-on-scroll">
-            <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl text-stride-text-strong mb-6 tracking-tight max-w-3xl mx-auto">
+            <SectionEyebrow>What we focus on</SectionEyebrow>
+            <h2 className="mt-3 font-display text-3xl sm:text-4xl lg:text-5xl text-stride-text-strong mb-6 tracking-tight max-w-3xl mx-auto">
               {problem.headline}
             </h2>
           </div>
@@ -274,7 +270,7 @@ const Features = () => {
                 <ul className="space-y-3">
                   {problem.definitionList.map((d) => (
                     <li key={d.strong} className="flex gap-3 text-sm sm:text-base">
-                      <span className="text-stride-sky font-bold mt-0.5 flex-shrink-0">→</span>
+                      <ArrowRight className="w-4 h-4 text-stride-sky mt-1 flex-shrink-0" />
                       <span className="text-stride-text-muted">
                         <strong className="text-stride-text-strong">{d.strong}</strong>
                         {d.text}

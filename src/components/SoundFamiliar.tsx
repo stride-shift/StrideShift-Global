@@ -150,15 +150,13 @@ const SoundFamiliar = () => {
                     variants={item}
                     className="group flex items-start gap-4 py-4 first:pt-0 last:pb-0"
                   >
-                    <span
-                      className="font-bold text-lg flex-shrink-0 group-hover:translate-x-1 transition-transform"
+                    <ArrowRight
+                      className="w-4 h-4 mt-1 flex-shrink-0 group-hover:translate-x-1 transition-transform"
                       style={{
                         color:
                           home.soundFamiliarAccentColor || 'hsl(var(--stride-accent))',
                       }}
-                    >
-                      →
-                    </span>
+                    />
                     <span className="text-stride-text-strong text-base sm:text-lg leading-snug">
                       {p}
                     </span>

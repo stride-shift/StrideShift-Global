@@ -8,18 +8,78 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { site } from '@/data/stride';
+import { getSupabase } from '@/lib/supabase';
+
+// Common disposable / throwaway email domains. Not exhaustive — just the ones
+// that show up most often in low-effort spam.
+const DISPOSABLE_DOMAINS = new Set([
+  'mailinator.com',
+  'tempmail.com',
+  'guerrillamail.com',
+  'guerrillamail.info',
+  '10minutemail.com',
+  'trashmail.com',
+  'throwaway.email',
+  'yopmail.com',
+  'getnada.com',
+  'sharklasers.com',
+  'maildrop.cc',
+  'dispostable.com',
+  'fakeinbox.com',
+]);
+
+// Names shouldn't contain URLs, scripting, or look like CMS spam.
+// Allows letters from any language, spaces, hyphens, apostrophes, periods.
+const NAME_BLOCK = /(https?:\/\/|www\.|<|>|\{|\}|\[|\])/i;
 
 const formSchema = z.object({
-  first: z.string().min(1, 'First name is required'),
-  last: z.string().min(1, 'Last name is required'),
-  email: z.string().email('Please enter a valid email'),
-  company: z.string().optional(),
-  message: z.string().min(10, 'Tell us a bit more (at least 10 characters)'),
+  first: z
+    .string()
+    .trim()
+    .min(1, 'First name is required')
+    .max(80, 'First name is too long')
+    .refine((v) => !NAME_BLOCK.test(v), 'Name looks invalid'),
+  last: z
+    .string()
+    .trim()
+    .min(1, 'Last name is required')
+    .max(80, 'Last name is too long')
+    .refine((v) => !NAME_BLOCK.test(v), 'Name looks invalid'),
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .min(1, 'Email is required')
+    .max(254, 'Email is too long')
+    .email('Please enter a valid email')
+    .refine(
+      (v) => /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(v) && !v.includes('..'),
+      'Please enter a valid email'
+    )
+    .refine(
+      (v) => !DISPOSABLE_DOMAINS.has(v.split('@')[1] ?? ''),
+      'Please use a non-disposable email'
+    ),
+  company: z
+    .string()
+    .trim()
+    .max(120, 'Company name is too long')
+    .optional()
+    .or(z.literal('')),
+  message: z
+    .string()
+    .trim()
+    .min(10, 'Tell us a bit more (at least 10 characters)')
+    .max(2000, "That's a lot — keep it under 2000 characters"),
   honeypot: z.string().max(0, 'Bot detected'),
   timestamp: z.number(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+// Anti-spam cooldown — block resubmits within 30s from the same browser.
+const COOLDOWN_KEY = 'stride-contact-cooldown';
+const COOLDOWN_MS = 30_000;
 
 const ContactForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -46,6 +106,8 @@ const ContactForm = () => {
         toast({ title: 'Error', description: 'Submission flagged.', variant: 'destructive' });
         return;
       }
+
+      // Time-on-form check — humans typically take a few seconds.
       const timeDiff = Date.now() - data.timestamp;
       if (timeDiff < 3000) {
         toast({
@@ -57,8 +119,49 @@ const ContactForm = () => {
         return;
       }
 
-      // Form submission placeholder — wire to your backend / email service of choice.
-      await new Promise((res) => setTimeout(res, 700));
+      // Per-browser cooldown — block rapid resubmits from the same person.
+      try {
+        const lastRaw = window.localStorage.getItem(COOLDOWN_KEY);
+        const last = lastRaw ? parseInt(lastRaw, 10) : 0;
+        const since = Date.now() - last;
+        if (since < COOLDOWN_MS) {
+          const secs = Math.ceil((COOLDOWN_MS - since) / 1000);
+          toast({
+            title: 'Please wait a moment',
+            description: `You just sent a message — try again in ${secs}s.`,
+            variant: 'destructive',
+          });
+          setIsSubmitting(false);
+          return;
+        }
+      } catch {
+        /* localStorage unavailable — ignore */
+      }
+
+      // Persist to Supabase contact_messages table (admin reads this in the
+      // Messages tab). Falls back gracefully if Supabase isn't configured.
+      const supa = getSupabase();
+      if (supa) {
+        const { error } = await supa.from('contact_messages').insert({
+          first_name: data.first,
+          last_name: data.last,
+          email: data.email,
+          company: data.company || null,
+          message: data.message,
+          source: 'contact_page',
+        });
+        if (error) throw new Error(error.message);
+      } else {
+        // No Supabase — keep the UX consistent by simulating a short delay.
+        await new Promise((res) => setTimeout(res, 700));
+      }
+
+      // Stamp the cooldown only after a successful submit.
+      try {
+        window.localStorage.setItem(COOLDOWN_KEY, String(Date.now()));
+      } catch {
+        /* ignore */
+      }
 
       toast({
         title: 'Thanks — we got it.',
@@ -161,22 +264,39 @@ const ContactForm = () => {
           <FormField
             control={form.control}
             name="message"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-stride-text-strong">What's on your mind?</FormLabel>
-                <div className="relative">
-                  <MessageSquare className="absolute left-3 top-3 h-4 w-4 text-stride-text-muted" />
-                  <FormControl>
-                    <Textarea
-                      placeholder="Tell us about the challenge you're facing…"
-                      className="min-h-[140px] pl-9 resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field }) => {
+              const len = field.value?.length ?? 0;
+              return (
+                <FormItem>
+                  <div className="flex items-center justify-between">
+                    <FormLabel className="text-stride-text-strong">
+                      What's on your mind?
+                    </FormLabel>
+                    <span
+                      className={`text-[11px] font-mono tabular-nums ${
+                        len > 1900
+                          ? 'text-amber-600 dark:text-amber-400'
+                          : 'text-stride-text-muted'
+                      }`}
+                    >
+                      {len} / 2000
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <MessageSquare className="absolute left-3 top-3 h-4 w-4 text-stride-text-muted" />
+                    <FormControl>
+                      <Textarea
+                        placeholder="Tell us about the challenge you're facing…"
+                        className="min-h-[140px] pl-9 resize-none"
+                        maxLength={2000}
+                        {...field}
+                      />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
 
           {/* Honeypot */}

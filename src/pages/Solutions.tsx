@@ -7,6 +7,8 @@ import SEO from '@/components/SEO';
 import { showcase } from '@/data/stride';
 import { RevealOnScrollRoot } from '@/hooks/useScrollReveal';
 import { useSiteContent } from '@/hooks/useSiteContent';
+import PageHeroBackground from '@/components/PageHeroBackground';
+import SectionEyebrow from '@/components/SectionEyebrow';
 
 const Solutions = () => {
   const [filter, setFilter] = useState<string>('All');
@@ -40,26 +42,17 @@ const Solutions = () => {
       <RevealOnScrollRoot />
 
       {/* Hero */}
-      <section className="relative pt-28 md:pt-36 pb-16 md:pb-20 bg-stride-ink text-white overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 right-0 w-[36rem] h-[36rem] rounded-full bg-stride-sky/18 blur-3xl animate-blob" />
-          <div
-            className="absolute bottom-0 left-0 w-[28rem] h-[28rem] rounded-full bg-stride-sage/22 blur-3xl animate-blob"
-            style={{ animationDelay: '-8s' }}
-          />
-          <div
-            className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[18rem] h-[18rem] rounded-full bg-stride-gold/10 blur-3xl animate-pulse-slow"
-          />
-        </div>
-        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.span
+      <section className="relative pt-28 md:pt-36 pb-16 md:pb-20 text-white overflow-hidden">
+        <PageHeroBackground />
+        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="inline-block mb-4 text-xs uppercase tracking-[0.22em] text-stride-accent-soft font-semibold"
+            className="mb-4"
           >
-            {showcase.eyebrow}
-          </motion.span>
+            <SectionEyebrow>{showcase.eyebrow}</SectionEyebrow>
+          </motion.div>
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

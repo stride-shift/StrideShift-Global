@@ -6,11 +6,12 @@ import { hero } from '@/data/stride';
 import { useSiteSettings, type HeroTemplate } from '@/hooks/useSiteSettings';
 import { CssHeroBackground } from '@/components/hero/HeroBackgrounds';
 
+// Sized for a paragraph-style statement (the heroSubhead now drives the hero).
 const HEADLINE_SIZE: Record<'sm' | 'md' | 'lg' | 'xl', string> = {
-  sm: 'text-3xl sm:text-4xl lg:text-5xl',
-  md: 'text-4xl sm:text-5xl lg:text-6xl',
-  lg: 'text-4xl sm:text-6xl lg:text-7xl',
-  xl: 'text-5xl sm:text-7xl lg:text-8xl',
+  sm: 'text-lg sm:text-xl lg:text-2xl',
+  md: 'text-xl sm:text-2xl lg:text-3xl',
+  lg: 'text-2xl sm:text-3xl lg:text-4xl',
+  xl: 'text-3xl sm:text-4xl lg:text-5xl',
 };
 
 // WebGL shaders pull in Three.js — load each only when its template is active.
@@ -81,23 +82,14 @@ const HeroShader = ({ template }: { template: Exclude<HeroTemplate, 'classic'> }
         animate="visible"
         variants={containerVariants}
       >
+        {/* Single statement — same heroSubhead drives every template. */}
         <motion.h1
           variants={itemVariants}
-          className={`font-display leading-[1.04] tracking-tight ${HEADLINE_SIZE[settings.heroHeadlineSize]}`}
-          style={{ color: settings.heroHeadlineColor }}
+          className={`font-display leading-snug tracking-tight ${HEADLINE_SIZE[settings.heroHeadlineSize]}`}
+          style={{ color: settings.heroHeadlineColor || settings.heroSubheadColor || undefined }}
         >
-          {settings.heroHeadline}
+          {settings.heroSubhead || settings.heroHeadline}
         </motion.h1>
-
-        <motion.p
-          variants={itemVariants}
-          className={`mt-7 text-base sm:text-xl max-w-2xl leading-relaxed ${
-            settings.heroAlign === 'center' ? 'mx-auto' : ''
-          }`}
-          style={{ color: settings.heroSubheadColor }}
-        >
-          {settings.heroSubhead}
-        </motion.p>
 
         <motion.div
           variants={itemVariants}

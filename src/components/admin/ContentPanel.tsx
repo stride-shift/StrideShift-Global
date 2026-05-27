@@ -14,14 +14,19 @@ import {
   Eye,
   ArrowUp,
   ArrowDown,
+  X,
+  Check,
 } from 'lucide-react';
 import {
   useSiteContent,
   DEFAULT_CONTENT,
   isSupabaseConfigured,
   type SiteContent,
+  type SectionStyle,
+  type HomeExtraBlock,
 } from '@/hooks/useSiteContent';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
+import { logAdminActivity } from '@/lib/adminActivity';
 import ImageUpload from '@/components/admin/ImageUpload';
 import ContentPreview from '@/components/admin/ContentPreview';
 import { importBlogFile } from '@/lib/importBlog';
@@ -87,38 +92,80 @@ const ColorField = ({
       {value && (
         <button
           onClick={() => onChange('')}
-          className="text-[10px] text-stride-text-muted hover:text-stride-text-strong px-1.5 py-1"
+          className="p-1 rounded-md text-stride-text-muted hover:text-stride-text-strong hover:bg-stride-bg transition-colors"
           aria-label="Clear colour"
           type="button"
         >
-          ✕
+          <X className="w-3.5 h-3.5" />
         </button>
       )}
     </div>
   </label>
 );
 
+/** Move an item up or down in an array, returning a new array. */
+function moveItem<T>(arr: T[], from: number, dir: -1 | 1): T[] {
+  const to = from + dir;
+  if (to < 0 || to >= arr.length) return arr;
+  const next = [...arr];
+  [next[from], next[to]] = [next[to], next[from]];
+  return next;
+}
+
 const Card = ({
   title,
   onRemove,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp,
+  canMoveDown,
   children,
 }: {
   title: string;
   onRemove?: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
   children: React.ReactNode;
 }) => (
   <div className="border border-stride-border rounded-xl p-4 space-y-3">
     <div className="flex items-center justify-between">
       <span className="text-xs font-semibold text-stride-text-muted">{title}</span>
-      {onRemove && (
-        <button
-          onClick={onRemove}
-          className="p-1.5 rounded-md text-stride-text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-          aria-label="Remove"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
-      )}
+      <div className="flex items-center gap-0.5">
+        {onMoveUp && (
+          <button
+            onClick={onMoveUp}
+            disabled={!canMoveUp}
+            className="p-1.5 rounded-md text-stride-text-muted hover:text-stride-accent disabled:opacity-30 disabled:hover:text-stride-text-muted transition-colors"
+            aria-label="Move up"
+            type="button"
+          >
+            <ArrowUp className="w-4 h-4" />
+          </button>
+        )}
+        {onMoveDown && (
+          <button
+            onClick={onMoveDown}
+            disabled={!canMoveDown}
+            className="p-1.5 rounded-md text-stride-text-muted hover:text-stride-accent disabled:opacity-30 disabled:hover:text-stride-text-muted transition-colors"
+            aria-label="Move down"
+            type="button"
+          >
+            <ArrowDown className="w-4 h-4" />
+          </button>
+        )}
+        {onRemove && (
+          <button
+            onClick={onRemove}
+            className="p-1.5 rounded-md text-stride-text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            aria-label="Remove"
+            type="button"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        )}
+      </div>
     </div>
     {children}
   </div>
@@ -134,11 +181,221 @@ const AddButton = ({ label, onClick }: { label: string; onClick: () => void }) =
   </button>
 );
 
+/** Per-solution gallery editor — list of image URLs uploaded via ImageUpload,
+ *  reorderable via up/down arrows, with an Add button. Stored under
+ *  content.solutionGalleries[slug]. */
+const SolutionGalleryEditor = ({
+  slug,
+  gallery,
+  onChange,
+}: {
+  slug: string;
+  gallery: string[];
+  onChange: (next: string[]) => void;
+}) => (
+  <div className="border-t border-stride-border pt-3 mt-1">
+    <div className="flex items-center justify-between mb-2">
+      <span className={labelCls}>Gallery ({gallery.length} images)</span>
+      <span className="text-[10px] text-stride-text-muted">
+        Shown when visitors click <em>Gallery</em>
+      </span>
+    </div>
+    <div className="space-y-2">
+      {gallery.map((url, i) => (
+        <div
+          key={`${slug}-${i}`}
+          className="flex items-start gap-2 bg-stride-bg rounded-lg p-2"
+        >
+          <div className="flex flex-col gap-0.5">
+            <button
+              type="button"
+              onClick={() => onChange(moveItem(gallery, i, -1))}
+              disabled={i === 0}
+              className="p-1 rounded text-stride-text-muted hover:text-stride-accent disabled:opacity-30"
+              aria-label="Move up"
+            >
+              <ArrowUp className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onChange(moveItem(gallery, i, 1))}
+              disabled={i === gallery.length - 1}
+              className="p-1 rounded text-stride-text-muted hover:text-stride-accent disabled:opacity-30"
+              aria-label="Move down"
+            >
+              <ArrowDown className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          <div className="flex-1 min-w-0">
+            <ImageUpload
+              value={url}
+              onChange={(newUrl) => {
+                const next = [...gallery];
+                next[i] = newUrl;
+                onChange(next);
+              }}
+              folder={`gallery/${slug}`}
+              compact
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => onChange(gallery.filter((_, x) => x !== i))}
+            className="p-2 rounded-md text-stride-text-muted hover:text-red-500"
+            aria-label="Remove image"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      ))}
+      <AddButton
+        label="Add gallery image"
+        onClick={() => onChange([...gallery, ''])}
+      />
+    </div>
+  </div>
+);
+
 const SectionCard = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <div className="bg-stride-bg-elev border border-stride-border rounded-2xl p-6">
     <h3 className="font-display text-xl text-stride-text-strong tracking-tight mb-4">{title}</h3>
     {children}
   </div>
+);
+
+/** Combined style + extras editor used by About / Team / Contact pages. */
+const SectionStyleAndExtras = ({
+  style,
+  extras,
+  onStyleChange,
+  onExtrasChange,
+}: {
+  style: SectionStyle;
+  extras: HomeExtraBlock[];
+  onStyleChange: (s: SectionStyle) => void;
+  onExtrasChange: (e: HomeExtraBlock[]) => void;
+}) => (
+  <>
+    <SectionCard title="Section colours">
+      <p className="text-xs text-stride-text-muted mb-3">
+        Override the default site colours for this page's headings. Leave blank to use the theme
+        default.
+      </p>
+      <div className="grid grid-cols-3 gap-3">
+        <ColorField
+          label="Title colour"
+          value={style.titleColor}
+          onChange={(v) => onStyleChange({ ...style, titleColor: v })}
+        />
+        <ColorField
+          label="Eyebrow colour"
+          value={style.eyebrowColor}
+          onChange={(v) => onStyleChange({ ...style, eyebrowColor: v })}
+        />
+        <ColorField
+          label="Accent colour"
+          value={style.accentColor}
+          onChange={(v) => onStyleChange({ ...style, accentColor: v })}
+        />
+      </div>
+    </SectionCard>
+
+    <SectionCard title={`Custom text blocks (${extras.length})`}>
+      <p className="text-xs text-stride-text-muted mb-3">
+        Add your own paragraphs to this page. Each block has its own colour, size and alignment;
+        use the arrows to reorder.
+      </p>
+      <div className="space-y-3">
+        {extras.map((b, i) => (
+          <Card
+            key={b.id}
+            title={`Block ${i + 1}`}
+            onRemove={() => onExtrasChange(extras.filter((_, x) => x !== i))}
+            onMoveUp={() => onExtrasChange(moveItem(extras, i, -1))}
+            onMoveDown={() => onExtrasChange(moveItem(extras, i, 1))}
+            canMoveUp={i > 0}
+            canMoveDown={i < extras.length - 1}
+          >
+            <textarea
+              value={b.text}
+              onChange={(e) => {
+                const next = [...extras];
+                next[i] = { ...b, text: e.target.value };
+                onExtrasChange(next);
+              }}
+              rows={2}
+              placeholder="Your text…"
+              className={`${inputCls} resize-none`}
+            />
+            <div className="grid grid-cols-3 gap-2">
+              <select
+                value={b.size}
+                onChange={(e) => {
+                  const next = [...extras];
+                  next[i] = { ...b, size: e.target.value as any };
+                  onExtrasChange(next);
+                }}
+                className={inputCls}
+              >
+                <option value="sm">Small</option>
+                <option value="md">Medium</option>
+                <option value="lg">Large</option>
+              </select>
+              <select
+                value={b.align}
+                onChange={(e) => {
+                  const next = [...extras];
+                  next[i] = { ...b, align: e.target.value as any };
+                  onExtrasChange(next);
+                }}
+                className={inputCls}
+              >
+                <option value="left">Left</option>
+                <option value="center">Center</option>
+                <option value="right">Right</option>
+              </select>
+              <div className="flex gap-1 items-center">
+                <input
+                  type="color"
+                  value={b.color || '#1a2a4a'}
+                  onChange={(e) => {
+                    const next = [...extras];
+                    next[i] = { ...b, color: e.target.value };
+                    onExtrasChange(next);
+                  }}
+                  className="h-9 w-12 rounded border border-stride-border bg-stride-bg-elev cursor-pointer"
+                />
+                <input
+                  value={b.color}
+                  onChange={(e) => {
+                    const next = [...extras];
+                    next[i] = { ...b, color: e.target.value };
+                    onExtrasChange(next);
+                  }}
+                  className="flex-1 min-w-0 px-2 py-2 rounded-md border border-stride-border bg-stride-bg-elev text-stride-text-strong text-xs font-mono focus:outline-none focus:ring-2 focus:ring-stride-accent"
+                />
+              </div>
+            </div>
+          </Card>
+        ))}
+        <AddButton
+          label="Add text block"
+          onClick={() =>
+            onExtrasChange([
+              ...extras,
+              {
+                id: `extra-${Date.now().toString(36)}`,
+                text: 'New text block.',
+                color: '#1a2a4a',
+                size: 'md',
+                align: 'left',
+              },
+            ])
+          }
+        />
+      </div>
+    </SectionCard>
+  </>
 );
 
 const PAGES = [
@@ -195,6 +452,10 @@ const ContentPanel = () => {
     setSaveError(null);
     try {
       await updateContent(draft);
+      await logAdminActivity({
+        action: 'content.save',
+        resource: `page:${page}`,
+      });
       setSavedFlash(true);
       setTimeout(() => setSavedFlash(false), 2600);
     } catch (e: any) {
@@ -243,38 +504,50 @@ const ContentPanel = () => {
 
   return (
     <div>
-      {/* Save bar */}
-      <div className="sticky top-16 z-20 flex items-center gap-3 bg-stride-bg/95 backdrop-blur py-3 mb-5">
-        <button
-          onClick={save}
-          disabled={saving}
-          className="px-5 py-2.5 rounded-lg bg-stride-navy text-white font-medium hover:bg-stride-navy-dark transition-colors disabled:opacity-60 inline-flex items-center gap-2"
-        >
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-          {dirty ? 'Save all changes' : 'Saved'}
-        </button>
-        <button
-          onClick={async () => {
-            if (
-              !window.confirm(
-                'Reset everything? This clears your custom content AND hero style (colour, size, alignment) back to the defaults.'
-              )
-            ) {
-              return;
-            }
-            await Promise.all([resetContent(), resetSettings()]);
-            setDraft(DEFAULT_CONTENT);
-          }}
-          className="px-4 py-2.5 rounded-lg text-stride-text-muted hover:bg-stride-bg-elev text-sm transition-colors"
-        >
-          Reset to default
-        </button>
-        {dirty && !savedFlash && (
-          <span className="text-sm text-amber-600 dark:text-amber-400">Unsaved changes</span>
-        )}
-        {savedFlash && (
-          <span className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">Saved ✓</span>
-        )}
+      {/* Save bar — modernised pill bar */}
+      <div className="sticky top-16 z-20 mb-5">
+        <div className="flex flex-wrap items-center gap-3 bg-stride-bg-elev/95 backdrop-blur border border-stride-border rounded-2xl px-4 py-3 shadow-sm">
+          <button
+            onClick={save}
+            disabled={saving || !dirty}
+            className={`px-5 py-2.5 rounded-full font-medium transition-all inline-flex items-center gap-2 ${
+              dirty
+                ? 'bg-stride-navy text-white hover:shadow-lg hover:-translate-y-0.5'
+                : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 cursor-default'
+            } disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-none`}
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : !dirty ? <Check className="w-4 h-4" /> : null}
+            {dirty ? 'Save all changes' : 'Saved'}
+          </button>
+          <button
+            onClick={async () => {
+              if (
+                !window.confirm(
+                  'Reset everything? This clears your custom content AND hero style (colour, size, alignment) back to the defaults.'
+                )
+              ) {
+                return;
+              }
+              await Promise.all([resetContent(), resetSettings()]);
+              setDraft(DEFAULT_CONTENT);
+            }}
+            className="px-4 py-2 rounded-full text-stride-text-muted hover:text-stride-text-strong hover:bg-stride-bg text-sm transition-colors"
+          >
+            Reset to default
+          </button>
+          <div className="flex-grow" />
+          {dirty && !savedFlash && (
+            <span className="text-xs px-3 py-1.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium">
+              Unsaved changes
+            </span>
+          )}
+          {savedFlash && (
+            <span className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-medium">
+              <Check className="w-3 h-3" />
+              Saved
+            </span>
+          )}
+        </div>
       </div>
       {saveError && (
         <p className="text-xs text-amber-600 dark:text-amber-400 leading-relaxed mb-4">{saveError}</p>
@@ -596,6 +869,10 @@ const ContentPanel = () => {
                       onRemove={() =>
                         setAbout({ storyCards: draft.about.storyCards.filter((_, x) => x !== i) })
                       }
+                      onMoveUp={() => setAbout({ storyCards: moveItem(draft.about.storyCards, i, -1) })}
+                      onMoveDown={() => setAbout({ storyCards: moveItem(draft.about.storyCards, i, 1) })}
+                      canMoveUp={i > 0}
+                      canMoveDown={i < draft.about.storyCards.length - 1}
                     >
                       <div className="grid grid-cols-2 gap-2">
                         <input
@@ -670,6 +947,10 @@ const ContentPanel = () => {
                       onRemove={() =>
                         setAbout({ comparison: draft.about.comparison.filter((_, x) => x !== i) })
                       }
+                      onMoveUp={() => setAbout({ comparison: moveItem(draft.about.comparison, i, -1) })}
+                      onMoveDown={() => setAbout({ comparison: moveItem(draft.about.comparison, i, 1) })}
+                      canMoveUp={i > 0}
+                      canMoveDown={i < draft.about.comparison.length - 1}
                     >
                       <input
                         value={row.traditional}
@@ -721,6 +1002,10 @@ const ContentPanel = () => {
                       onRemove={() =>
                         setAbout({ credentials: draft.about.credentials.filter((_, x) => x !== i) })
                       }
+                      onMoveUp={() => setAbout({ credentials: moveItem(draft.about.credentials, i, -1) })}
+                      onMoveDown={() => setAbout({ credentials: moveItem(draft.about.credentials, i, 1) })}
+                      canMoveUp={i > 0}
+                      canMoveDown={i < draft.about.credentials.length - 1}
                     >
                       <input
                         value={c.title}
@@ -765,6 +1050,13 @@ const ContentPanel = () => {
                   <Field label="CTA subtext" value={draft.about.ctaSub} onChange={(v) => setAbout({ ctaSub: v })} multiline />
                 </div>
               </SectionCard>
+
+              <SectionStyleAndExtras
+                style={draft.about.style}
+                extras={draft.about.extras}
+                onStyleChange={(s) => setAbout({ style: s })}
+                onExtrasChange={(e) => setAbout({ extras: e })}
+              />
             </>
           )}
 
@@ -791,6 +1083,10 @@ const ContentPanel = () => {
                       onRemove={() =>
                         setTeam({ members: draft.team.members.filter((_, x) => x !== i) })
                       }
+                      onMoveUp={() => setTeam({ members: moveItem(draft.team.members, i, -1) })}
+                      onMoveDown={() => setTeam({ members: moveItem(draft.team.members, i, 1) })}
+                      canMoveUp={i > 0}
+                      canMoveDown={i < draft.team.members.length - 1}
                     >
                       <ImageUpload
                         value={m.photo}
@@ -860,18 +1156,34 @@ const ContentPanel = () => {
                   />
                 </div>
               </SectionCard>
+
+              <SectionStyleAndExtras
+                style={draft.team.style}
+                extras={draft.team.extras}
+                onStyleChange={(s) => setTeam({ style: s })}
+                onExtrasChange={(e) => setTeam({ extras: e })}
+              />
             </>
           )}
 
           {/* ===== CONTACT ===== */}
           {page === 'contact' && (
-            <SectionCard title="Contact page">
-              <div className="space-y-4">
-                <Field label="Eyebrow" value={draft.contact.eyebrow} onChange={(v) => setContact({ eyebrow: v })} />
-                <Field label="Title" value={draft.contact.title} onChange={(v) => setContact({ title: v })} />
-                <Field label="Tagline" value={draft.contact.tagline} onChange={(v) => setContact({ tagline: v })} multiline rows={4} />
-              </div>
-            </SectionCard>
+            <>
+              <SectionCard title="Contact page">
+                <div className="space-y-4">
+                  <Field label="Eyebrow" value={draft.contact.eyebrow} onChange={(v) => setContact({ eyebrow: v })} />
+                  <Field label="Title" value={draft.contact.title} onChange={(v) => setContact({ title: v })} />
+                  <Field label="Tagline" value={draft.contact.tagline} onChange={(v) => setContact({ tagline: v })} multiline rows={4} />
+                </div>
+              </SectionCard>
+
+              <SectionStyleAndExtras
+                style={draft.contact.style}
+                extras={draft.contact.extras}
+                onStyleChange={(s) => setContact({ style: s })}
+                onExtrasChange={(e) => setContact({ extras: e })}
+              />
+            </>
           )}
 
           {/* ===== TESTIMONIALS ===== */}
@@ -888,6 +1200,10 @@ const ContentPanel = () => {
                         testimonials: draft.testimonials.filter((_, x) => x !== i),
                       })
                     }
+                    onMoveUp={() => setDraft({ ...draft, testimonials: moveItem(draft.testimonials, i, -1) })}
+                    onMoveDown={() => setDraft({ ...draft, testimonials: moveItem(draft.testimonials, i, 1) })}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < draft.testimonials.length - 1}
                   >
                     <textarea
                       value={t.quote}
@@ -964,7 +1280,14 @@ const ContentPanel = () => {
               </p>
               <div className="space-y-4">
                 {draft.solutions.map((s, i) => (
-                  <Card key={s.slug} title={`${s.n} · ${s.name}`}>
+                  <Card
+                    key={s.slug}
+                    title={`${s.n} · ${s.name}`}
+                    onMoveUp={() => setDraft({ ...draft, solutions: moveItem(draft.solutions, i, -1) })}
+                    onMoveDown={() => setDraft({ ...draft, solutions: moveItem(draft.solutions, i, 1) })}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < draft.solutions.length - 1}
+                  >
                     <ImageUpload
                       value={s.image}
                       onChange={(url) => {
@@ -1031,6 +1354,22 @@ const ContentPanel = () => {
                       }}
                       placeholder="Chips (comma-separated)"
                       className={inputCls}
+                    />
+
+                    {/* Per-solution gallery — shown on /solutions/{slug} when
+                        the user clicks the floating Gallery button. */}
+                    <SolutionGalleryEditor
+                      slug={s.slug}
+                      gallery={draft.solutionGalleries?.[s.slug] ?? []}
+                      onChange={(images) =>
+                        setDraft({
+                          ...draft,
+                          solutionGalleries: {
+                            ...(draft.solutionGalleries ?? {}),
+                            [s.slug]: images,
+                          },
+                        })
+                      }
                     />
                   </Card>
                 ))}
@@ -1106,6 +1445,10 @@ const ContentPanel = () => {
                       onRemove={() =>
                         setDraft({ ...draft, posts: draft.posts.filter((_, x) => x !== i) })
                       }
+                      onMoveUp={() => setDraft({ ...draft, posts: moveItem(draft.posts, i, -1) })}
+                      onMoveDown={() => setDraft({ ...draft, posts: moveItem(draft.posts, i, 1) })}
+                      canMoveUp={i > 0}
+                      canMoveDown={i < draft.posts.length - 1}
                     >
                       <button
                         onClick={() => setPreviewPostIndex(i)}

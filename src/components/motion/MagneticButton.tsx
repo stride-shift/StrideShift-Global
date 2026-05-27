@@ -1,4 +1,4 @@
-import { forwardRef, useRef, useCallback, type ReactNode } from 'react';
+import { forwardRef, useRef, useCallback, type CSSProperties, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
 interface MagneticButtonProps {
@@ -14,6 +14,8 @@ interface MagneticButtonProps {
   onClick?: () => void;
   type?: 'button' | 'submit';
   ariaLabel?: string;
+  /** Inline style — merged with magnetic transforms set imperatively. */
+  style?: CSSProperties;
 }
 
 /**
@@ -21,7 +23,7 @@ interface MagneticButtonProps {
  * Composes with normal button styling: pass everything through className.
  */
 const MagneticButton = forwardRef<HTMLElement, MagneticButtonProps>(
-  ({ children, className, strength = 0.35, href, target, rel, onClick, type = 'button', ariaLabel }, _ref) => {
+  ({ children, className, strength = 0.35, href, target, rel, onClick, type = 'button', ariaLabel, style }, _ref) => {
     const elRef = useRef<HTMLElement>(null);
     const innerRef = useRef<HTMLSpanElement>(null);
 
@@ -70,6 +72,7 @@ const MagneticButton = forwardRef<HTMLElement, MagneticButtonProps>(
           onClick={onClick}
           className={baseClass}
           aria-label={ariaLabel}
+          style={style}
         >
           {content}
         </a>
@@ -85,6 +88,7 @@ const MagneticButton = forwardRef<HTMLElement, MagneticButtonProps>(
         onClick={onClick}
         className={baseClass}
         aria-label={ariaLabel}
+        style={style}
       >
         {content}
       </button>

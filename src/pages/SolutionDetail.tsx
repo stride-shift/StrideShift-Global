@@ -1,12 +1,15 @@
+import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, ArrowRight, CheckCircle2, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, X, Play, Images } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 import SEO from '@/components/SEO';
-import SolutionVideo from '@/components/SolutionVideo';
 import { Button } from '@/components/ui/button';
 import { findSolution, showcase } from '@/data/stride';
 import { RevealOnScrollRoot } from '@/hooks/useScrollReveal';
+import { ScrollTiltedGrid } from '@/components/ui/scroll-tilted-grid';
+import SectionEyebrow from '@/components/SectionEyebrow';
+import { useSiteContent } from '@/hooks/useSiteContent';
 
 const container = {
   hidden: { opacity: 0 },
@@ -20,6 +23,25 @@ const item = {
 const SolutionDetail = () => {
   const { slug } = useParams();
   const solution = slug ? findSolution(slug) : undefined;
+  const { content } = useSiteContent();
+  const galleryImages = slug ? content.solutionGalleries?.[slug] ?? [] : [];
+  const [galleryOpen, setGalleryOpen] = useState(false);
+
+  // Lock body scroll while the gallery overlay is open so only the modal
+  // scrolls. Restore on close / unmount.
+  useEffect(() => {
+    if (!galleryOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setGalleryOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [galleryOpen]);
 
   if (!solution) {
     return (
@@ -47,67 +69,80 @@ const SolutionDetail = () => {
         description={solution.hero.lede || solution.intro?.body}
         imageUrl={solution.hero.image}
       />
-      <RevealOnScrollRoot />
+      {/* key={slug} forces the scroll-reveal observer to re-initialise when the
+          user clicks between solutions — without it the observer keeps watching
+          the previous page's DOM and the new page never fades in. */}
+      <RevealOnScrollRoot key={slug} />
 
-      {/* Hero */}
-      <section className="relative pt-28 md:pt-36 pb-28 md:pb-40 bg-stride-ink text-white overflow-hidden">
-        {solution.hero.image && (
-          <img
-            src={solution.hero.image}
-            alt=""
-            aria-hidden="true"
-            className="absolute inset-0 w-full h-full object-cover opacity-25"
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-br from-stride-ink via-stride-ink/80 to-stride-ink-deep" />
+      {/* Hero — two-column: copy + CTAs on left, video card on right */}
+      <section className="relative pt-28 md:pt-32 pb-20 md:pb-24 bg-stride-ink text-white overflow-hidden">
+        {/* Subtle ambient glow only — no shader template here */}
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 right-0 w-[36rem] h-[36rem] rounded-full bg-stride-sky/18 blur-3xl animate-blob" />
-          <div
-            className="absolute bottom-0 left-0 w-[28rem] h-[28rem] rounded-full bg-stride-sage/22 blur-3xl animate-blob"
-            style={{ animationDelay: '-8s' }}
-          />
-          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[22rem] h-[22rem] rounded-full bg-stride-gold/14 blur-3xl animate-pulse-slow" />
+          <div className="absolute top-0 right-0 w-[34rem] h-[34rem] rounded-full bg-stride-sky/12 blur-3xl" />
+          <div className="absolute bottom-0 left-1/4 w-[26rem] h-[26rem] rounded-full bg-stride-sage/10 blur-3xl" />
         </div>
-        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Link
             to="/solutions"
-            className="inline-flex items-center text-stride-accent-soft text-sm mb-6 hover:text-white transition-colors"
+            className="inline-flex items-center text-stride-cream/70 text-sm mb-8 hover:text-white transition-colors"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             All solutions
           </Link>
-          <motion.div initial="hidden" animate="visible" variants={container}>
-            <motion.span
-              variants={item}
-              className="inline-block mb-4 text-xs uppercase tracking-[0.22em] text-stride-accent-soft font-semibold"
-            >
-              {solution.hero.eyebrow || solution.category}
-            </motion.span>
-            <motion.h1
-              variants={item}
-              className="font-display text-4xl sm:text-5xl lg:text-6xl text-white mb-6 tracking-tight leading-[1.05]"
-            >
-              {solution.hero.title}
-            </motion.h1>
-            {solution.hero.lede && (
-              <motion.p
+
+          <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-14 items-center">
+            {/* Left — copy + CTAs */}
+            <motion.div initial="hidden" animate="visible" variants={container}>
+              <motion.div variants={item} className="mb-5">
+                <SectionEyebrow align="left">
+                  {solution.hero.eyebrow || solution.category}
+                </SectionEyebrow>
+              </motion.div>
+
+              <motion.h1
                 variants={item}
-                className="text-lg sm:text-xl text-white/85 max-w-3xl leading-relaxed"
+                className="font-display text-4xl sm:text-5xl lg:text-6xl xl:text-[4.25rem] text-white mb-6 tracking-tight leading-[1.04]"
               >
-                {solution.hero.lede}
-              </motion.p>
-            )}
-          </motion.div>
+                {solution.hero.title}
+              </motion.h1>
+
+              {solution.hero.lede && (
+                <motion.p
+                  variants={item}
+                  className="text-base sm:text-lg text-stride-cream/85 leading-relaxed mb-8 max-w-xl"
+                >
+                  {solution.hero.lede}
+                </motion.p>
+              )}
+
+              <motion.div variants={item} className="flex flex-col sm:flex-row flex-wrap gap-3">
+                <Link
+                  to="/contact"
+                  className="group inline-flex items-center justify-center px-6 py-3.5 rounded-lg bg-stride-sky text-white font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
+                >
+                  Start a conversation
+                  <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+                <a
+                  href="#how-it-works"
+                  className="inline-flex items-center justify-center px-6 py-3.5 rounded-lg bg-white/[0.06] border border-white/15 backdrop-blur-md text-white font-medium hover:bg-white/[0.10] transition-colors"
+                >
+                  See how it works
+                </a>
+              </motion.div>
+            </motion.div>
+
+            {/* Right — inline video card */}
+            <InlineVideoCard
+              videoUrl={solution.videoUrl}
+              tagline={solution.videoTagline || solution.intro?.title?.replace(/<[^>]*>/g, '')}
+              productName={solution.name}
+              posterImage={solution.hero.image}
+            />
+          </div>
         </div>
       </section>
-
-      {/* Explainer video */}
-      <SolutionVideo
-        videoUrl={solution.videoUrl}
-        tagline={solution.videoTagline || solution.intro?.title?.replace(/<[^>]*>/g, '')}
-        productName={solution.name}
-        posterImage={solution.hero.image}
-      />
 
       {/* Intro */}
       {solution.intro && (
@@ -197,7 +232,7 @@ const SolutionDetail = () => {
 
       {/* Process steps */}
       {solution.process && (
-        <section className="py-16 md:py-20 bg-stride-bg">
+        <section id="how-it-works" className="py-16 md:py-20 bg-stride-bg">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="reveal-on-scroll font-display text-3xl md:text-4xl text-stride-text-strong mb-10 tracking-tight text-center">
               How it works
@@ -224,15 +259,15 @@ const SolutionDetail = () => {
 
       {/* "How it works" prose block */}
       {solution.how && (
-        <section className="py-16 md:py-20 bg-stride-navy text-white">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <section id="how-it-works" className="py-16 md:py-20 bg-stride-navy text-white">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             {solution.how.title && (
               <h2 className="reveal-on-scroll font-display text-3xl md:text-4xl mb-3 tracking-tight">
                 {solution.how.title}
               </h2>
             )}
             {solution.how.tagline && (
-              <p className="reveal-on-scroll text-stride-accent-soft uppercase tracking-[0.22em] text-xs font-semibold mb-5">
+              <p className="reveal-on-scroll text-stride-gold uppercase tracking-[0.28em] text-xs font-semibold mb-5">
                 {solution.how.tagline}
               </p>
             )}
@@ -242,21 +277,28 @@ const SolutionDetail = () => {
               </p>
             )}
             {solution.how.h4 && (
-              <h3 className="reveal-on-scroll font-display text-xl md:text-2xl mb-6 tracking-tight">
+              <h3 className="reveal-on-scroll font-display text-xl md:text-2xl mb-8 tracking-tight">
                 {solution.how.h4}
               </h3>
             )}
             {solution.how.items && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-left max-w-4xl mx-auto">
+              <div
+                className="grid gap-3 text-left mx-auto"
+                style={{
+                  gridTemplateColumns: `repeat(auto-fit, minmax(${
+                    solution.how.items.length > 5 ? '150px' : '200px'
+                  }, 1fr))`,
+                }}
+              >
                 {solution.how.items.map((it, i) => (
                   <div
                     key={i}
-                    className={`reveal-on-scroll scale-up delay-${Math.min((i % 5) + 1, 5)} bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/10`}
+                    className={`reveal-on-scroll scale-up delay-${Math.min((i % 5) + 1, 5)} bg-white/[0.06] backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/[0.10] transition-colors`}
                   >
-                    <span className="block text-stride-accent-soft text-xs font-mono mb-1">
+                    <span className="block text-stride-gold text-xs font-mono mb-1.5">
                       {String(i + 1).padStart(2, '0')}
                     </span>
-                    <span className="text-white text-sm">{it}</span>
+                    <span className="text-white text-sm leading-snug">{it}</span>
                   </div>
                 ))}
               </div>
@@ -546,10 +588,24 @@ const SolutionDetail = () => {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* CTA — warm gradient panel, matches About-page treatment, with a
+          mb-12 gap from the footer so it doesn't slam into it */}
       {solution.cta && (
-        <section className="py-16 md:py-24 bg-stride-navy text-white text-center">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 reveal-on-scroll">
+        <section className="relative py-14 md:py-20 mb-12 md:mb-20 overflow-hidden text-white text-center">
+          <div className="absolute inset-0 bg-gradient-to-br from-stride-ink via-stride-sky/40 to-stride-sage/35" />
+          <div className="absolute inset-0 bg-stride-ink/55" />
+          <div
+            className="absolute -top-20 -right-20 w-[28rem] h-[28rem] rounded-full bg-stride-gold/15 blur-3xl"
+            aria-hidden="true"
+          />
+          <div
+            className="absolute -bottom-24 -left-24 w-[24rem] h-[24rem] rounded-full bg-stride-sky/20 blur-3xl"
+            aria-hidden="true"
+          />
+          <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 reveal-on-scroll">
+            <span className="inline-block mb-4 text-[11px] uppercase tracking-[0.28em] text-stride-gold font-semibold">
+              What's next
+            </span>
             {solution.cta.title && (
               <h2
                 className="font-display text-3xl md:text-4xl lg:text-5xl mb-4 tracking-tight"
@@ -557,11 +613,11 @@ const SolutionDetail = () => {
               />
             )}
             {solution.cta.sub && (
-              <p className="text-white/85 mb-8 leading-relaxed">{solution.cta.sub}</p>
+              <p className="text-white/90 mb-8 leading-relaxed">{solution.cta.sub}</p>
             )}
             <Link
               to="/contact"
-              className="inline-flex items-center px-7 py-3 bg-white text-stride-navy rounded-lg hover:bg-stride-accent-soft transition-all group font-semibold"
+              className="inline-flex items-center px-7 py-3.5 bg-stride-cream text-stride-ink rounded-full hover:shadow-2xl hover:-translate-y-0.5 transition-all group font-semibold"
             >
               Start a conversation
               <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -569,7 +625,146 @@ const SolutionDetail = () => {
           </div>
         </section>
       )}
+
+      {/* Floating Gallery button — sits next to the global Let's-talk bubble */}
+      <button
+        type="button"
+        onClick={() => setGalleryOpen(true)}
+        className="group fixed bottom-6 right-[176px] z-50 inline-flex items-center gap-2 bg-stride-gold text-stride-ink rounded-full pl-4 pr-5 py-3 shadow-2xl hover:shadow-[0_24px_60px_-20px_hsl(var(--stride-gold)/0.6)] transition-all hover:-translate-y-0.5"
+        aria-label="Open product gallery"
+      >
+        <span className="relative flex items-center justify-center w-7 h-7 rounded-full bg-stride-ink/15 group-hover:bg-stride-ink/25 transition-colors">
+          <Images className="h-3.5 w-3.5" />
+        </span>
+        <span className="text-sm font-semibold tracking-tight">Gallery</span>
+      </button>
+
+      {/* Gallery overlay — full-screen ScrollTiltedGrid of brand posters.
+          The tilted tiles transform out horizontally on entry/exit so the
+          outer container MUST clip x-overflow, otherwise you get a body-wide
+          horizontal scrollbar. The X button sits above the scrollable inner
+          via z-60 / position fixed. */}
+      {galleryOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-stride-ink/95 backdrop-blur-md overflow-hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Gallery"
+        >
+          {/* Close button — fixed to viewport, never scrolls away */}
+          <button
+            type="button"
+            onClick={() => setGalleryOpen(false)}
+            className="fixed top-6 right-6 z-[60] w-11 h-11 rounded-full bg-white/15 border border-white/25 backdrop-blur-md text-white hover:bg-white/25 transition-colors flex items-center justify-center shadow-xl"
+            aria-label="Close gallery"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          {/* Gallery title — also fixed so it stays visible while scrolling */}
+          <div className="fixed top-6 left-6 z-[60] pointer-events-none">
+            <span className="inline-block text-[11px] uppercase tracking-[0.28em] text-stride-gold font-semibold">
+              {solution.name} · Gallery
+            </span>
+          </div>
+
+          {/* Inner scroller — owns the y-scroll, clips x */}
+          <div className="absolute inset-0 overflow-y-auto overflow-x-hidden">
+            {galleryImages.length > 0 ? (
+              <ScrollTiltedGrid loop maxWidth="2xl" gap={12} images={galleryImages} />
+            ) : (
+              <div className="min-h-full flex items-center justify-center px-6">
+                <div className="text-center max-w-md text-stride-cream/70">
+                  <Images className="w-10 h-10 mx-auto mb-3 opacity-60" />
+                  <p className="font-display text-2xl text-white mb-2 tracking-tight">
+                    Gallery coming soon
+                  </p>
+                  <p className="text-sm leading-relaxed">
+                    No images have been added for {solution.name} yet. Admins can upload them
+                    in the dashboard under <em>Content → Solutions → Gallery</em>.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </PageLayout>
+  );
+};
+
+/** Inline video card used inside the hero — a compact version of SolutionVideo
+ *  that sits in a column instead of overlapping the section below. */
+const InlineVideoCard = ({
+  videoUrl,
+  tagline,
+  productName,
+  posterImage,
+}: {
+  videoUrl?: string;
+  tagline?: string;
+  productName: string;
+  posterImage?: string;
+}) => {
+  const [playing, setPlaying] = useState(false);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.7, ease: [0.2, 0.8, 0.2, 1], delay: 0.2 }}
+      className="relative rounded-2xl overflow-hidden shadow-2xl bg-stride-ink-deep aspect-video border border-white/10"
+    >
+      {videoUrl && playing ? (
+        <iframe
+          src={`${videoUrl}${videoUrl.includes('?') ? '&' : '?'}autoplay=1&rel=0&modestbranding=1`}
+          title={`${productName} explainer`}
+          className="absolute inset-0 w-full h-full"
+          frameBorder={0}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      ) : (
+        <>
+          {posterImage ? (
+            <img
+              src={posterImage}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 w-full h-full object-cover opacity-70"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-stride-ink via-stride-sky/40 to-stride-sage/30" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-br from-stride-ink/75 via-stride-ink/35 to-stride-ink/70" />
+
+          <div className="relative h-full flex flex-col items-center justify-center text-center text-white p-6">
+            <span className="inline-block text-[10px] uppercase tracking-[0.28em] text-stride-gold font-semibold mb-3">
+              Watch the explainer · 90 seconds
+            </span>
+            <h3 className="font-display text-2xl sm:text-3xl tracking-tight mb-2">
+              {productName}
+            </h3>
+            {tagline && (
+              <p className="text-white/80 text-sm max-w-sm leading-relaxed mb-5">{tagline}</p>
+            )}
+            <motion.button
+              whileHover={{ scale: 1.06 }}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => videoUrl && setPlaying(true)}
+              disabled={!videoUrl}
+              className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center bg-white text-stride-ink shadow-2xl ${
+                videoUrl ? 'cursor-pointer' : 'cursor-not-allowed opacity-90'
+              }`}
+              aria-label="Play explainer video"
+              type="button"
+            >
+              <Play className="w-6 h-6 sm:w-8 sm:h-8 fill-stride-ink ml-1" />
+            </motion.button>
+          </div>
+        </>
+      )}
+    </motion.div>
   );
 };
 

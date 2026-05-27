@@ -1,4 +1,4 @@
-import { Eye } from 'lucide-react';
+import { Eye, ArrowRight } from 'lucide-react';
 import type { SiteContent } from '@/hooks/useSiteContent';
 
 /**
@@ -66,15 +66,13 @@ const HomePreview = ({ draft }: { draft: SiteContent }) => (
       <ul className="mt-4 divide-y divide-stride-border">
         {draft.home.problems.map((p, i) => (
           <li key={i} className="flex gap-2 py-2.5 text-sm text-stride-text-strong">
-            <span
-              className="font-bold"
+            <ArrowRight
+              className="w-3 h-3 mt-0.5 flex-shrink-0"
               style={{
                 color:
                   draft.home.soundFamiliarAccentColor || 'hsl(var(--stride-accent))',
               }}
-            >
-              →
-            </span>
+            />
             {p}
           </li>
         ))}

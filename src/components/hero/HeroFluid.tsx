@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight, MessageSquare } from 'lucide-react';
 
+// Sized for a full sentence (the heroSubhead), not a billboard headline.
+// If you switch this hero back to rendering a short headline, bump these up.
 const HEADLINE_SIZE: Record<'sm' | 'md' | 'lg' | 'xl', string> = {
-  sm: 'text-3xl sm:text-4xl lg:text-5xl',
-  md: 'text-4xl sm:text-5xl lg:text-6xl',
-  lg: 'text-5xl sm:text-6xl lg:text-7xl xl:text-[5.25rem]',
-  xl: 'text-6xl sm:text-7xl lg:text-8xl xl:text-[6.5rem]',
+  sm: 'text-lg sm:text-xl lg:text-2xl',
+  md: 'text-xl sm:text-2xl lg:text-3xl',
+  lg: 'text-2xl sm:text-3xl lg:text-4xl',
+  xl: 'text-3xl sm:text-4xl lg:text-5xl',
 };
 import { Link } from 'react-router-dom';
 import { hero, marqueeStats } from '@/data/stride';
@@ -54,12 +56,6 @@ const HeroFluid = () => {
           bg: [0.04, 0.06, 0.10] as [number, number, number],
         };
 
-  // Parse the headline. Split on em-dash so we can highlight the second half.
-  const fullHeadline = settings.heroHeadline || hero.title;
-  const parts = fullHeadline.split('—');
-  const headlineLead = parts[0]?.trim() ?? fullHeadline;
-  const headlineTail = parts[1]?.trim() ?? '';
-
   return (
     <section className="relative w-full min-h-[100svh] flex flex-col bg-stride-ink overflow-hidden">
       {/* ---------- WebGL fluid background ---------- */}
@@ -98,44 +94,22 @@ const HeroFluid = () => {
             settings.heroAlign === 'center' ? 'text-center' : ''
           }`}
         >
-          <div className={`max-w-3xl ${settings.heroAlign === 'center' ? 'mx-auto' : ''}`}>
-            {/* Headline — kinetic word reveal, two halves so we can color the tail */}
+          <div className={`max-w-xl ${settings.heroAlign === 'center' ? 'mx-auto' : ''}`}>
+            {/* Single statement — the only text on the hero. Pulled from
+                heroSubhead (admin-editable) so it can be updated without code. */}
             <h1
-              className={`font-display leading-[1.02] tracking-tight ${HEADLINE_SIZE[settings.heroHeadlineSize]}`}
-              style={{ color: settings.heroHeadlineColor }}
+              className={`font-display leading-snug tracking-tight ${HEADLINE_SIZE[settings.heroHeadlineSize]}`}
+              style={{ color: settings.heroHeadlineColor || settings.heroSubheadColor || undefined }}
             >
               <TextReveal
                 as="span"
-                text={headlineLead}
+                text={settings.heroSubhead || settings.heroHeadline}
                 className="block"
                 staggerMs={75}
                 initialDelayMs={150}
                 immediate
               />
-              {headlineTail && (
-                <TextReveal
-                  as="span"
-                  text={headlineTail}
-                  className="block text-gold-gradient"
-                  staggerMs={75}
-                  initialDelayMs={500}
-                  immediate
-                />
-              )}
             </h1>
-
-            <p
-              className={`mt-8 max-w-xl text-lg leading-relaxed border-l-2 border-stride-gold/60 pl-5 ${
-                settings.heroAlign === 'center' ? 'mx-auto border-l-0 pl-0' : ''
-              }`}
-              style={{ color: settings.heroSubheadColor }}
-            >
-              {settings.heroSubhead}
-            </p>
-
-            <p className="mt-5 max-w-xl text-sm text-stride-cream/60 leading-relaxed">
-              {hero.description}
-            </p>
 
             {/* CTAs — primary magnetic, secondary subtle glass */}
             <div
@@ -147,9 +121,13 @@ const HeroFluid = () => {
                 href="/contact"
                 strength={0.4}
                 className="btn-sheen min-h-[54px] px-8 py-4 bg-stride-cream text-stride-ink rounded-full shadow-2xl hover:shadow-[0_20px_60px_-20px_rgba(0,0,0,0.6)] text-sm sm:text-base font-semibold tracking-tight"
+                style={{
+                  background: settings.heroPrimaryButtonBg || undefined,
+                  color: settings.heroPrimaryButtonText || undefined,
+                }}
               >
                 <span className="relative z-[2] inline-flex items-center gap-2">
-                  {hero.ctaLabel}
+                  {settings.heroCtaLabel || hero.ctaLabel}
                   <ArrowRight className="w-4 h-4" />
                 </span>
               </MagneticButton>
@@ -158,9 +136,14 @@ const HeroFluid = () => {
                 href="#capabilities"
                 strength={0.3}
                 className="min-h-[54px] px-8 py-4 rounded-full text-stride-cream border border-stride-cream/25 bg-stride-cream/5 hover:bg-stride-cream/15 backdrop-blur-md text-sm sm:text-base font-medium"
+                style={
+                  settings.heroSecondaryButtonBorder
+                    ? { borderColor: settings.heroSecondaryButtonBorder }
+                    : undefined
+                }
               >
                 <span className="inline-flex items-center gap-2">
-                  {hero.secondaryLabel}
+                  {settings.heroSecondaryLabel || hero.secondaryLabel}
                   <MessageSquare className="w-4 h-4" />
                 </span>
               </MagneticButton>

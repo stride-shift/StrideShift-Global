@@ -1,4 +1,4 @@
-import { Mail, Linkedin, Clock, MapPin } from 'lucide-react';
+import { Mail, Linkedin, Clock, MapPin, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { site } from '@/data/stride';
 import { useSiteContent } from '@/hooks/useSiteContent';
@@ -53,8 +53,9 @@ const ContactInfo = () => {
             <span className="text-xs uppercase tracking-[0.22em] text-white/60 font-semibold mb-1">
               Or use the form
             </span>
-            <span className="font-medium group-hover:translate-x-1 transition-transform">
-              Tell us what's keeping you up at night →
+            <span className="font-medium inline-flex items-center gap-2 group-hover:translate-x-1 transition-transform">
+              Tell us what's keeping you up at night
+              <ArrowRight className="w-4 h-4" />
             </span>
           </Link>
         </div>

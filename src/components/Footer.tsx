@@ -35,7 +35,7 @@ const Footer = () => {
         return;
       }
     }
-    toast({ title: 'Thanks!', description: "You're on the dispatch list." });
+    toast({ title: 'Thanks!', description: "You're on the newsletter list." });
     setEmail('');
     setIsSubmitting(false);
   };
@@ -102,7 +102,7 @@ const Footer = () => {
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider mb-4 text-white">Get the dispatch</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wider mb-4 text-white">Get the newsletter</h3>
             <p className="text-white/60 text-xs mb-3 leading-relaxed">
               Subscribe for the latest updates on StrideShift Global.
             </p>

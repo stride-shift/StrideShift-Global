@@ -60,6 +60,8 @@ export interface SolutionCard {
   solution: string;
   image: string;
   chips: string[];
+  /** Per-product gallery — image URLs shown in the Gallery overlay. */
+  gallery?: string[];
 }
 
 export interface BlogBlock {
@@ -85,6 +87,19 @@ export interface HomeExtraBlock {
   size: 'sm' | 'md' | 'lg';
   align: 'left' | 'center' | 'right';
 }
+
+/** Visual overrides for a section — empty string means "use the site default". */
+export interface SectionStyle {
+  titleColor: string;
+  eyebrowColor: string;
+  accentColor: string;
+}
+
+export const EMPTY_SECTION_STYLE: SectionStyle = {
+  titleColor: '',
+  eyebrowColor: '',
+  accentColor: '',
+};
 
 export interface SiteContent {
   home: {
@@ -112,6 +127,8 @@ export interface SiteContent {
     credentials: Credential[];
     ctaTitle: string;
     ctaSub: string;
+    style: SectionStyle;
+    extras: HomeExtraBlock[];
   };
   team: {
     eyebrow: string;
@@ -121,14 +138,21 @@ export interface SiteContent {
     ctaTitle: string;
     ctaSub: string;
     members: TeamMember[];
+    style: SectionStyle;
+    extras: HomeExtraBlock[];
   };
   contact: {
     eyebrow: string;
     title: string;
     tagline: string;
+    style: SectionStyle;
+    extras: HomeExtraBlock[];
   };
   testimonials: Testimonial[];
   solutions: SolutionCard[];
+  /** Per-solution galleries keyed by slug — shown in the Gallery overlay on
+   *  product detail pages. Edited in the admin Content tab. */
+  solutionGalleries: Record<string, string[]>;
   posts: BlogPost[];
 }
 
@@ -158,6 +182,8 @@ export const DEFAULT_CONTENT: SiteContent = {
     credentials: aboutPage.credentials.map((c) => ({ ...c })),
     ctaTitle: aboutPage.ctaTitle,
     ctaSub: aboutPage.ctaSub,
+    style: { ...EMPTY_SECTION_STYLE },
+    extras: [],
   },
   team: {
     eyebrow: teamPage.eyebrow,
@@ -167,11 +193,15 @@ export const DEFAULT_CONTENT: SiteContent = {
     ctaTitle: teamPage.ctaTitle,
     ctaSub: teamPage.ctaSub,
     members: teamPage.members.map((m) => ({ ...m })),
+    style: { ...EMPTY_SECTION_STYLE },
+    extras: [],
   },
   contact: {
     eyebrow: contactPage.eyebrow,
     title: contactPage.title,
     tagline: contactPage.tagline,
+    style: { ...EMPTY_SECTION_STYLE },
+    extras: [],
   },
   testimonials: defaultTestimonials.map((t) => ({ ...t })),
   solutions: showcase.items.map((s) => ({
@@ -184,6 +214,7 @@ export const DEFAULT_CONTENT: SiteContent = {
     image: s.image,
     chips: [...s.chips],
   })),
+  solutionGalleries: {},
   posts: defaultPosts.map((p) => ({
     slug: p.slug,
     title: p.title,
@@ -212,15 +243,28 @@ const SiteContentContext = createContext<SiteContentState | null>(null);
 /** Deep-merge stored content over defaults so new fields always exist. */
 function mergeContent(stored: any): SiteContent {
   if (!stored || typeof stored !== 'object') return DEFAULT_CONTENT;
+  const mergeSection = <T extends { style?: SectionStyle; extras?: HomeExtraBlock[] }>(
+    def: T,
+    s: any
+  ): T => ({
+    ...def,
+    ...(s || {}),
+    style: { ...EMPTY_SECTION_STYLE, ...(s?.style || {}) },
+    extras: Array.isArray(s?.extras) ? s.extras : def.extras ?? [],
+  });
   return {
     home: { ...DEFAULT_CONTENT.home, ...(stored.home || {}) },
-    about: { ...DEFAULT_CONTENT.about, ...(stored.about || {}) },
-    team: { ...DEFAULT_CONTENT.team, ...(stored.team || {}) },
-    contact: { ...DEFAULT_CONTENT.contact, ...(stored.contact || {}) },
+    about: mergeSection(DEFAULT_CONTENT.about, stored.about),
+    team: mergeSection(DEFAULT_CONTENT.team, stored.team),
+    contact: mergeSection(DEFAULT_CONTENT.contact, stored.contact),
     testimonials: Array.isArray(stored.testimonials)
       ? stored.testimonials
       : DEFAULT_CONTENT.testimonials,
     solutions: Array.isArray(stored.solutions) ? stored.solutions : DEFAULT_CONTENT.solutions,
+    solutionGalleries:
+      stored.solutionGalleries && typeof stored.solutionGalleries === 'object'
+        ? stored.solutionGalleries
+        : {},
     posts: Array.isArray(stored.posts) ? stored.posts : DEFAULT_CONTENT.posts,
   };
 }

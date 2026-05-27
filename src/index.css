@@ -124,14 +124,14 @@
     --stride-text-strong: 40 22% 92%;
     --stride-text-muted: 213 14% 65%;
 
-    --stride-bg: 212 32% 6%;
-    --stride-bg-elev: 212 28% 10%;
-    --stride-border: 213 18% 18%;
+    --stride-bg: 212 28% 12%;          /* lifted from 6% — was too dark */
+    --stride-bg-elev: 212 24% 17%;     /* elevated cards read clearly against bg */
+    --stride-border: 213 18% 24%;
 
     --stride-cream: 40 22% 92%;
     --stride-cream-warm: 38 25% 88%;
-    --stride-ink: 212 32% 6%;
-    --stride-ink-deep: 215 42% 3%;
+    --stride-ink: 212 28% 12%;         /* match bg so heroes blend at top */
+    --stride-ink-deep: 215 32% 8%;     /* lifted from 3% */
 
     --stride-sky: 208 50% 65%;
     --stride-sky-soft: 208 50% 88%;

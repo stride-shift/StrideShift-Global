@@ -1,14 +1,13 @@
-
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import ContactInfo from '@/components/ContactInfo';
 import FloatingContactButton from '@/components/FloatingContactButton';
 import ScrollProgress from '@/components/ScrollProgress';
 
 type PageLayoutProps = {
   children: React.ReactNode;
+  /** Kept for backward compatibility — also hides the floating contact bubble. */
   showContact?: boolean;
 };
 
@@ -25,7 +24,6 @@ const PageLayout = ({ children, showContact = true }: PageLayoutProps) => {
       <ScrollProgress />
       <Navbar />
       {children}
-      {showContact && <ContactInfo />}
       <Footer />
       {showContact && <FloatingContactButton />}
     </div>

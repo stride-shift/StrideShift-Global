@@ -5,11 +5,12 @@ import { Link } from 'react-router-dom';
 import { hero } from '@/data/stride';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
 
+// Sized for a paragraph-style statement (the heroSubhead now drives the hero).
 const HEADLINE_SIZE: Record<'sm' | 'md' | 'lg' | 'xl', string> = {
-  sm: 'text-3xl sm:text-4xl lg:text-5xl',
-  md: 'text-4xl sm:text-5xl lg:text-6xl',
-  lg: 'text-5xl sm:text-6xl lg:text-7xl xl:text-[5rem]',
-  xl: 'text-6xl sm:text-7xl lg:text-8xl xl:text-[6rem]',
+  sm: 'text-lg sm:text-xl lg:text-2xl',
+  md: 'text-xl sm:text-2xl lg:text-3xl',
+  lg: 'text-2xl sm:text-3xl lg:text-4xl',
+  xl: 'text-3xl sm:text-4xl lg:text-5xl',
 };
 
 /**
@@ -89,30 +90,16 @@ const HeroClassic = () => {
         variants={containerVariants}
       >
         <div className={`max-w-2xl ${settings.heroAlign === 'center' ? 'mx-auto' : ''}`}>
+          {/* Single statement — uses heroSubhead so the same admin-editable
+              field drives every template. Headline field kept in settings for
+              when a template wants both, but Classic only renders one block. */}
           <motion.h1
             variants={itemVariants}
-            className={`font-display leading-[1.03] tracking-tight ${HEADLINE_SIZE[settings.heroHeadlineSize]}`}
-            style={{ color: settings.heroHeadlineColor }}
+            className={`font-display leading-snug tracking-tight ${HEADLINE_SIZE[settings.heroHeadlineSize]}`}
+            style={{ color: settings.heroHeadlineColor || settings.heroSubheadColor || undefined }}
           >
-            {settings.heroHeadline}
+            {settings.heroSubhead || settings.heroHeadline}
           </motion.h1>
-
-          <motion.p
-            variants={itemVariants}
-            className={`mt-6 text-lg sm:text-xl font-medium border-l-2 border-stride-accent-soft pl-4 max-w-xl ${
-              settings.heroAlign === 'center' ? 'mx-auto border-l-0 pl-0' : ''
-            }`}
-            style={{ color: settings.heroSubheadColor }}
-          >
-            {settings.heroSubhead}
-          </motion.p>
-
-          <motion.p
-            variants={itemVariants}
-            className="mt-5 text-sm sm:text-base text-white/70 max-w-xl leading-relaxed"
-          >
-            {hero.description}
-          </motion.p>
 
           <motion.div
             variants={itemVariants}

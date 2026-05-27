@@ -5,6 +5,8 @@ import PageLayout from '@/components/PageLayout';
 import SEO from '@/components/SEO';
 import { RevealOnScrollRoot } from '@/hooks/useScrollReveal';
 import { useSiteContent } from '@/hooks/useSiteContent';
+import PageHeroBackground from '@/components/PageHeroBackground';
+import SectionEyebrow from '@/components/SectionEyebrow';
 
 const container = {
   hidden: { opacity: 0 },
@@ -15,9 +17,22 @@ const item = {
   visible: { y: 0, opacity: 1, transition: { duration: 0.6 } },
 };
 
+const EXTRA_SIZE: Record<'sm' | 'md' | 'lg', string> = {
+  sm: 'text-sm',
+  md: 'text-base sm:text-lg',
+  lg: 'text-lg sm:text-xl',
+};
+const EXTRA_ALIGN: Record<'left' | 'center' | 'right', string> = {
+  left: 'text-left',
+  center: 'text-center',
+  right: 'text-right',
+};
+
 const About = () => {
   const { content } = useSiteContent();
   const about = content.about;
+  const style = about.style;
+  const extras = about.extras ?? [];
   return (
     <PageLayout>
       <SEO
@@ -27,26 +42,17 @@ const About = () => {
       <RevealOnScrollRoot />
 
       {/* Hero */}
-      <section className="relative pt-28 md:pt-36 pb-16 md:pb-24 bg-stride-ink text-white overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-10 right-0 w-[36rem] h-[36rem] rounded-full bg-stride-sage/20 blur-3xl animate-blob" />
-          <div
-            className="absolute bottom-0 left-0 w-[28rem] h-[28rem] rounded-full bg-stride-sky/22 blur-3xl animate-blob"
-            style={{ animationDelay: '-8s' }}
-          />
-          <div className="absolute top-1/2 right-1/3 w-[20rem] h-[20rem] rounded-full bg-stride-gold/10 blur-3xl animate-pulse-slow" />
-        </div>
-        <div className="relative w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <section className="relative pt-28 md:pt-36 pb-16 md:pb-24 text-white overflow-hidden">
+        <PageHeroBackground />
+        <div className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div initial="hidden" animate="visible" variants={container}>
-            <motion.span
-              variants={item}
-              className="inline-block mb-4 text-xs uppercase tracking-[0.22em] text-stride-accent-soft font-semibold"
-            >
-              {about.eyebrow}
-            </motion.span>
+            <motion.div variants={item} className="mb-4">
+              <SectionEyebrow>{about.eyebrow}</SectionEyebrow>
+            </motion.div>
             <motion.h1
               variants={item}
               className="font-display text-4xl sm:text-5xl lg:text-6xl text-white mb-6 tracking-tight"
+              style={style.titleColor ? { color: style.titleColor } : undefined}
             >
               {about.title}
             </motion.h1>
@@ -56,6 +62,20 @@ const About = () => {
             >
               {about.tagline}
             </motion.p>
+
+            {extras.length > 0 && (
+              <motion.div variants={item} className="mt-6 space-y-3 max-w-3xl mx-auto">
+                {extras.map((b) => (
+                  <p
+                    key={b.id}
+                    className={`leading-relaxed ${EXTRA_SIZE[b.size]} ${EXTRA_ALIGN[b.align]}`}
+                    style={{ color: b.color || 'rgba(255,255,255,0.85)' }}
+                  >
+                    {b.text}
+                  </p>
+                ))}
+              </motion.div>
+            )}
           </motion.div>
         </div>
       </section>
@@ -84,7 +104,10 @@ const About = () => {
                 variants={item}
                 className="bg-stride-bg border border-stride-border rounded-2xl p-6 md:p-8 hover:shadow-xl hover:-translate-y-1 transition-all"
               >
-                <span className="block text-stride-accent font-mono text-sm tracking-wider mb-2">
+                <span
+                  className="block font-mono text-sm tracking-wider mb-2"
+                  style={{ color: style.accentColor || 'hsl(var(--stride-accent))' }}
+                >
                   {card.n}
                 </span>
                 <span className="block text-xs uppercase tracking-[0.22em] text-stride-text-muted font-semibold mb-3">
@@ -177,16 +200,29 @@ const About = () => {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-16 md:py-24 bg-stride-navy text-white text-center">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* CTA — warm gradient panel instead of flat navy */}
+      <section className="relative py-16 md:py-24 overflow-hidden text-white text-center">
+        <div className="absolute inset-0 bg-gradient-to-br from-stride-ink via-stride-sky/40 to-stride-sage/35" />
+        <div className="absolute inset-0 bg-stride-ink/55" />
+        <div
+          className="absolute -top-20 -right-20 w-[28rem] h-[28rem] rounded-full bg-stride-gold/15 blur-3xl"
+          aria-hidden="true"
+        />
+        <div
+          className="absolute -bottom-24 -left-24 w-[24rem] h-[24rem] rounded-full bg-stride-sky/20 blur-3xl"
+          aria-hidden="true"
+        />
+        <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <span className="inline-block mb-4 text-[11px] uppercase tracking-[0.28em] text-stride-gold font-semibold">
+            What's next
+          </span>
           <h2 className="font-display text-3xl md:text-4xl lg:text-5xl mb-4 tracking-tight">
             {about.ctaTitle}
           </h2>
-          <p className="text-white/85 mb-8 leading-relaxed">{about.ctaSub}</p>
+          <p className="text-white/90 mb-8 leading-relaxed">{about.ctaSub}</p>
           <Link
             to="/contact"
-            className="inline-flex items-center px-7 py-3 bg-white text-stride-navy rounded-lg hover:bg-stride-accent-soft transition-all group font-semibold"
+            className="inline-flex items-center px-7 py-3.5 bg-stride-cream text-stride-ink rounded-full hover:shadow-2xl hover:-translate-y-0.5 transition-all group font-semibold"
           >
             Start a conversation
             <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />

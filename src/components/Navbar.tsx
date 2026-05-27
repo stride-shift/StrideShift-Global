@@ -2,17 +2,14 @@ import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Menu, X, Shield, LogIn } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
   NavigationMenu,
-  NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from '@/components/ui/navigation-menu';
-import { showcase } from '@/data/stride';
 import ThemeToggle from '@/components/ThemeToggle';
 import Logo from '@/components/Logo';
 import { useAuth } from '@/hooks/useAuth';
@@ -22,7 +19,6 @@ const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
   const { user, isAdmin } = useAuth();
   const { theme } = useTheme();
 
@@ -32,15 +28,13 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // In dark mode, treat nav as always "scrolled" so it uses elevated bg styling.
-  const navIsScrolled = theme === 'dark' ? true : isScrolled;
+  // Always treat nav as "scrolled" so it has a visible backdrop on every page.
+  // Without this, the nav is transparent at the top of long pages and looks
+  // like it's disappeared into the hero.
+  void isScrolled;
+  void theme;
+  const navIsScrolled = true;
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
-
-  const goToContact = () => {
-    if (location.pathname !== '/contact') navigate('/contact');
-    else window.scrollTo({ top: 0, behavior: 'smooth' });
-    setIsMenuOpen(false);
-  };
 
   const linkClass = (active = false) =>
     cn(
@@ -93,43 +87,11 @@ const Navbar = () => {
                 </NavigationMenuItem>
 
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger
-                    className={cn(
-                      navIsScrolled
-                        ? 'text-stride-text-strong hover:text-stride-accent bg-transparent'
-                        : 'text-white/90 hover:text-white bg-transparent hover:bg-white/10'
-                    )}
-                  >
-                    Solutions
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid gap-1 p-3 w-[520px] md:grid-cols-2 bg-stride-bg-elev">
-                      <li className="md:col-span-2 mb-1">
-                        <Link
-                          to="/solutions"
-                          className="block p-3 rounded-md bg-stride-navy text-white hover:bg-stride-navy-dark transition-colors"
-                        >
-                          <div className="font-medium">All 9 solutions →</div>
-                          <p className="text-xs text-stride-accent-soft mt-1">
-                            See the full lineup
-                          </p>
-                        </Link>
-                      </li>
-                      {showcase.items.map((item) => (
-                        <li key={item.slug}>
-                          <Link
-                            to={`/solutions/${item.slug}`}
-                            className="block p-2.5 space-y-0.5 rounded-md hover:bg-stride-bg transition-colors"
-                          >
-                            <div className="font-medium text-stride-text-strong text-sm">
-                              {item.name}
-                            </div>
-                            <p className="text-[11px] text-stride-text-muted">{item.category}</p>
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </NavigationMenuContent>
+                  <Link to="/solutions">
+                    <NavigationMenuLink className={linkClass(location.pathname.startsWith('/solutions'))}>
+                      Solutions
+                    </NavigationMenuLink>
+                  </Link>
                 </NavigationMenuItem>
 
                 <NavigationMenuItem>
@@ -146,6 +108,16 @@ const Navbar = () => {
                       className={linkClass(location.pathname.startsWith('/blog'))}
                     >
                       Ideas
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+
+                <NavigationMenuItem>
+                  <Link to="/contact">
+                    <NavigationMenuLink
+                      className={linkClass(location.pathname === '/contact')}
+                    >
+                      Contact
                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
@@ -184,17 +156,6 @@ const Navbar = () => {
                   Sign in
                 </Link>
               )}
-              <button
-                onClick={goToContact}
-                className={cn(
-                  'px-4 py-2 rounded-md transition-colors text-sm font-medium',
-                  navIsScrolled
-                    ? 'bg-stride-navy text-white hover:bg-stride-navy-dark'
-                    : 'bg-white text-stride-navy hover:bg-stride-accent-soft'
-                )}
-              >
-                Start a conversation
-              </button>
             </div>
           </div>
 
@@ -231,6 +192,7 @@ const Navbar = () => {
             { to: '/solutions', label: 'Solutions' },
             { to: '/team', label: 'Team' },
             { to: '/blog', label: 'Ideas' },
+            { to: '/contact', label: 'Contact' },
           ].map((link) => (
             <Link
               key={link.to}
@@ -263,12 +225,6 @@ const Navbar = () => {
               Sign in
             </Link>
           )}
-          <button
-            onClick={goToContact}
-            className="block w-full text-left px-3 py-2 rounded-md text-sm font-medium text-white bg-stride-navy hover:bg-stride-navy-dark"
-          >
-            Start a conversation
-          </button>
         </div>
       </div>
     </motion.nav>

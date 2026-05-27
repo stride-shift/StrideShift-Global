@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Lightbulb } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import SectionEyebrow from '@/components/SectionEyebrow';
 import { Button } from '@/components/ui/button';
 import BlogPostCard from '@/components/BlogPostCard';
 import { ideasPage } from '@/data/stride';
@@ -17,13 +18,8 @@ const BlogPreview = () => {
       <div className="container mx-auto max-w-6xl">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-14 gap-4 reveal-on-scroll">
           <div>
-            <div className="inline-flex items-center gap-2 mb-3 px-3 py-1 bg-stride-gold/15 text-stride-gold rounded-full border border-stride-gold/30">
-              <Lightbulb size={14} />
-              <span className="text-[11px] uppercase tracking-[0.22em] font-semibold">
-                {ideasPage.eyebrow}
-              </span>
-            </div>
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl text-stride-text-strong mb-3 tracking-tight">
+            <SectionEyebrow align="left">{ideasPage.eyebrow}</SectionEyebrow>
+            <h2 className="mt-3 font-display text-3xl md:text-4xl lg:text-5xl text-stride-text-strong mb-3 tracking-tight">
               {ideasPage.title}
             </h2>
             <p className="text-stride-text-muted max-w-xl">{ideasPage.sub}</p>

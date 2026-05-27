@@ -2,20 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Quote } from 'lucide-react';
 import { useSiteContent } from '@/hooks/useSiteContent';
+import SectionEyebrow from '@/components/SectionEyebrow';
 
-const ACCENT_IMAGES = [
-  'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=800&q=70',
-  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=70',
-  'https://images.unsplash.com/photo-1614436163996-25cee5f54290?auto=format&fit=crop&w=800&q=70',
-];
-
-// Editorial gradients in the brand palette — sky, sage, gold — rotated so
-// each testimonial gets its own mood without leaving the design system.
-const SIDE_TINTS = [
-  { left: 'from-stride-sky/80 via-stride-sky to-stride-ink', right: 'from-stride-gold/80 via-stride-gold/60 to-stride-ink' },
-  { left: 'from-stride-sage/80 via-stride-sage to-stride-ink', right: 'from-stride-sky/80 via-stride-sky/60 to-stride-ink' },
-  { left: 'from-stride-gold/70 via-stride-sage to-stride-ink', right: 'from-stride-sky/80 via-stride-sage/60 to-stride-ink' },
-];
+// StrideShift-branded flanking artwork — the user supplied left.png + right.png
+// (techno-portrait posters). Kept the same on every slide for a consistent
+// editorial feel; subtle motion still happens via the framer-motion key cycle.
+// Swapped per design — right.png reads better on the left side and vice versa.
+const LEFT_ART = '/testimonials/right.png';
+const RIGHT_ART = '/testimonials/left.png';
 
 const Testimonials = () => {
   const { content } = useSiteContent();
@@ -33,9 +27,6 @@ const Testimonials = () => {
   if (!testimonials.length) return null;
   const safeIndex = active % testimonials.length;
   const current = testimonials[safeIndex] ?? testimonials[0];
-  const tint = SIDE_TINTS[active % SIDE_TINTS.length];
-  const leftImg = ACCENT_IMAGES[active % ACCENT_IMAGES.length];
-  const rightImg = ACCENT_IMAGES[(active + 1) % ACCENT_IMAGES.length];
 
   const next = () => setActive((a) => (a + 1) % testimonials.length);
   const prev = () => setActive((a) => (a - 1 + testimonials.length) % testimonials.length);
@@ -49,37 +40,21 @@ const Testimonials = () => {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-10 md:mb-14 reveal-on-scroll">
-          <div className="inline-flex items-center gap-3 mb-3 text-stride-text-muted">
-            <span className="h-px w-10 bg-gradient-to-r from-transparent via-stride-sky/60 to-stride-sky/60" />
-            <span className="text-xs uppercase tracking-[0.22em] font-semibold">Voices</span>
-            <span className="h-px w-10 bg-gradient-to-l from-transparent via-stride-sage/60 to-stride-sage/60" />
-          </div>
-          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl text-stride-text-strong tracking-tight">
+          <SectionEyebrow>Voices</SectionEyebrow>
+          <h2 className="mt-3 font-display text-3xl sm:text-4xl lg:text-5xl text-stride-text-strong tracking-tight">
             What clients tell us
           </h2>
         </div>
 
         <div className="grid grid-cols-[1fr_minmax(0,3fr)_1fr] gap-3 md:gap-6 items-center">
-          {/* LEFT decorative image */}
+          {/* LEFT decorative image — StrideShift techno-portrait */}
           <div className="relative hidden lg:block aspect-[3/4] rounded-2xl overflow-hidden">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={`left-${active}`}
-                initial={{ opacity: 0, scale: 1.04 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.7 }}
-                className={`absolute inset-0 bg-gradient-to-br ${tint.left}`}
-              >
-                <img
-                  src={leftImg}
-                  alt=""
-                  aria-hidden="true"
-                  className="absolute inset-0 w-full h-full object-cover mix-blend-multiply"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-              </motion.div>
-            </AnimatePresence>
+            <img
+              src={LEFT_ART}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
           </div>
 
           {/* CENTER quote card */}
@@ -162,26 +137,14 @@ const Testimonials = () => {
             </AnimatePresence>
           </div>
 
-          {/* RIGHT decorative image */}
+          {/* RIGHT decorative image — StrideShift techno-portrait */}
           <div className="relative hidden lg:block aspect-[3/4] rounded-2xl overflow-hidden">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={`right-${active}`}
-                initial={{ opacity: 0, scale: 1.04 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.7 }}
-                className={`absolute inset-0 bg-gradient-to-br ${tint.right}`}
-              >
-                <img
-                  src={rightImg}
-                  alt=""
-                  aria-hidden="true"
-                  className="absolute inset-0 w-full h-full object-cover mix-blend-multiply"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-              </motion.div>
-            </AnimatePresence>
+            <img
+              src={RIGHT_ART}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
           </div>
         </div>
       </div>

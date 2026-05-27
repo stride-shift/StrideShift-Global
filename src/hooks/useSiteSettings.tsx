@@ -96,6 +96,9 @@ export const HERO_TEMPLATES: { id: HeroTemplate; name: string; description: stri
 export type HeroAlign = 'left' | 'center';
 export type HeroHeadlineSize = 'sm' | 'md' | 'lg' | 'xl';
 
+export type HeroPrimaryButtonStyle = 'cream' | 'navy' | 'gold' | 'custom';
+export type HeroBackgroundDirection = 'br' | 'bl' | 'tr' | 'tl' | 'b' | 'r';
+
 export interface SiteSettings {
   heroTemplate: HeroTemplate;
   heroImageUrl: string;
@@ -106,6 +109,12 @@ export interface SiteSettings {
   heroHeadlineColor: string;
   heroSubheadColor: string;
   heroOverlayOpacity: number;
+  heroPrimaryButtonBg: string;
+  heroPrimaryButtonText: string;
+  heroSecondaryButtonBorder: string;
+  heroBackgroundDirection: HeroBackgroundDirection;
+  heroCtaLabel: string;
+  heroSecondaryLabel: string;
 }
 
 export const DEFAULT_SETTINGS: SiteSettings = {
@@ -116,17 +125,26 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   // section below — the hero sets the tone, that section carries the detail.
   heroHeadline: 'Clarity for the decisions that matter most.',
   heroSubhead:
-    'StrideShift is an AI-powered think tank for leadership teams facing complex, open-ended challenges.',
+    'An AI-powered think tank for leadership teams facing complex, open-ended challenges and making high-stakes decisions.',
   heroAlign: 'left',
   heroHeadlineSize: 'lg',
   heroHeadlineColor: '#ffffff',
   heroSubheadColor: '#ffffff',
   heroOverlayOpacity: 0.85,
+  heroPrimaryButtonBg: '',
+  heroPrimaryButtonText: '',
+  heroSecondaryButtonBorder: '',
+  heroBackgroundDirection: 'br',
+  heroCtaLabel: 'Start a conversation',
+  heroSecondaryLabel: 'See how we work',
 };
 
 // v2 — bumped when the Angle palette + Fluid hero became the default so
 // every visitor lands on the new look instead of their cached 'classic'.
-const STORAGE_KEY = 'stride-site-settings-v2';
+// v3 — bumped when the hero copy changed to the new "AI-powered think tank
+// … high-stakes decisions" sentence so existing visitors see the new default
+// instead of their cached v2 subhead.
+const STORAGE_KEY = 'stride-site-settings-v3';
 const SETTINGS_ROW_ID = 1;
 
 interface SiteSettingsState {

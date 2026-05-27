@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, TouchEvent } from 'react';
+import SectionEyebrow from '@/components/SectionEyebrow';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -75,7 +76,8 @@ const Projects = () => {
             isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           }`}
         >
-          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl text-stride-text-strong mb-4 tracking-tight">
+          <SectionEyebrow>What we build</SectionEyebrow>
+          <h2 className="mt-3 font-display text-3xl sm:text-4xl lg:text-5xl text-stride-text-strong mb-4 tracking-tight">
             {showcase.title}
           </h2>
           <p className="text-stride-text-muted text-base sm:text-lg leading-relaxed">{showcase.sub}</p>
