@@ -15,7 +15,6 @@ import BlogPostDetail from './pages/BlogPostDetail';
 import Solutions from './pages/Solutions';
 import SolutionDetail from './pages/SolutionDetail';
 import SignIn from './pages/SignIn';
-import SignUp from './pages/SignUp';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Admin from './pages/Admin';
@@ -41,7 +40,6 @@ const App = () => {
             <Route path="/solutions" element={<Solutions />} />
             <Route path="/solutions/:slug" element={<SolutionDetail />} />
             <Route path="/sign-in" element={<SignIn />} />
-            <Route path="/sign-up" element={<SignUp />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/admin" element={<Admin />} />

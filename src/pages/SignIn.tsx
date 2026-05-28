@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Mail, Lock, Loader2 } from 'lucide-react';
+// SignUp page was removed — StrideShift is invite-only. Admins issue invites
+// from /admin → People → Invitations and Supabase emails a sign-up link.
 import AuthLayout from '@/components/AuthLayout';
 import SEO from '@/components/SEO';
 import { getSupabase, AUTH_REDIRECT_AFTER_SIGNIN } from '@/lib/supabase';
@@ -58,12 +60,9 @@ const SignIn = () => {
         title="Sign in"
         description="Sign in with your email and password."
         foot={
-          <>
-            New here?{' '}
-            <Link to="/sign-up" className="text-stride-accent font-medium underline">
-              Create an account
-            </Link>
-          </>
+          <span className="text-stride-text-muted">
+            StrideShift is invite-only. If you don't have an account, contact your admin.
+          </span>
         }
       >
         <form onSubmit={handleSubmit} className="space-y-4">
