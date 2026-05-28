@@ -76,8 +76,14 @@ const PeoplePanel = () => {
   const [invitePassword, setInvitePassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [inviteAdmin, setInviteAdmin] = useState(false);
+  const [emailUser, setEmailUser] = useState(true);
   const [inviting, setInviting] = useState(false);
-  const [created, setCreated] = useState<{ email: string; password: string } | null>(null);
+  const [created, setCreated] = useState<{
+    email: string;
+    password: string;
+    emailed: boolean;
+    emailWarning: string | null;
+  } | null>(null);
   const [copied, setCopied] = useState(false);
 
   // Generate a strong, memorable-ish password: 3 random words from a small
@@ -198,6 +204,7 @@ const PeoplePanel = () => {
           password: invitePassword,
           display_name: inviteName.trim() || null,
           is_admin: inviteAdmin,
+          email_user: emailUser,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -207,7 +214,12 @@ const PeoplePanel = () => {
             `Edge function ${res.status}: ${res.statusText}`
         );
       }
-      setCreated({ email: inviteEmail.trim().toLowerCase(), password: invitePassword });
+      setCreated({
+        email: inviteEmail.trim().toLowerCase(),
+        password: invitePassword,
+        emailed: Boolean((data as { emailed?: boolean }).emailed),
+        emailWarning: (data as { email_warning?: string | null }).email_warning ?? null,
+      });
       setInviteEmail('');
       setInviteName('');
       setInvitePassword('');
@@ -408,12 +420,22 @@ const PeoplePanel = () => {
                   <h3 className="font-display text-lg text-stride-text-strong tracking-tight flex items-center gap-2">
                     <Check className="w-4 h-4 text-emerald-500" />
                     User created
+                    {created.emailed && (
+                      <span className="text-[10px] uppercase tracking-wider bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 px-2 py-0.5 rounded-full font-semibold">
+                        emailed
+                      </span>
+                    )}
                   </h3>
                   <p className="text-xs text-stride-text-muted mt-1">
-                    Share these credentials with them out-of-band (Slack, SMS, in
-                    person). They can sign in immediately — no email confirmation
-                    needed.
+                    {created.emailed
+                      ? "We've emailed them their credentials with a recommendation to change the password via Forgot password. They can sign in immediately."
+                      : 'Share these credentials with them out-of-band (Slack, SMS, in person). They can sign in immediately.'}
                   </p>
+                  {created.emailWarning && (
+                    <p className="text-xs text-amber-600 dark:text-amber-300 mt-1">
+                      Email skipped: {created.emailWarning}
+                    </p>
+                  )}
                 </div>
                 <button
                   onClick={() => setCreated(null)}
@@ -527,6 +549,18 @@ const PeoplePanel = () => {
                 Generate
               </button>
             </div>
+            <label className="flex items-center gap-2 text-sm text-stride-text-strong cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={emailUser}
+                onChange={(e) => setEmailUser(e.target.checked)}
+                className="accent-stride-accent"
+              />
+              Email these credentials to the user
+              <span className="text-xs text-stride-text-muted">
+                — they'll see a "you can change this anytime via Forgot password" note.
+              </span>
+            </label>
             <div className="flex items-center gap-3">
               <button
                 type="submit"
@@ -537,7 +571,7 @@ const PeoplePanel = () => {
                 Create user
               </button>
               <p className="text-xs text-stride-text-muted">
-                Creates the account immediately and shows you the password to share.
+                Creates the account immediately and (optionally) emails them the credentials.
               </p>
             </div>
           </form>
