@@ -8,8 +8,12 @@ import {
   ScrollText,
   Check,
   X,
-  Mail,
   RefreshCcw,
+  KeyRound,
+  Copy,
+  Eye,
+  EyeOff,
+  Sparkles,
 } from 'lucide-react';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
@@ -69,8 +73,26 @@ const PeoplePanel = () => {
   // Invite form
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteName, setInviteName] = useState('');
+  const [invitePassword, setInvitePassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [inviteAdmin, setInviteAdmin] = useState(false);
   const [inviting, setInviting] = useState(false);
+  const [created, setCreated] = useState<{ email: string; password: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  // Generate a strong, memorable-ish password: 3 random words from a small
+  // wordlist + a 3-digit number + a symbol. Easy to dictate, hard to guess.
+  const generatePassword = () => {
+    const words = [
+      'orbit', 'forge', 'pulse', 'spark', 'tide', 'glade', 'cliff', 'horizon',
+      'cobalt', 'lumen', 'quiver', 'thatch', 'cipher', 'echo', 'falcon', 'glow',
+      'haven', 'iris', 'jett', 'kilo', 'lyric', 'matrix', 'nova', 'oak',
+    ];
+    const pick = () => words[Math.floor(Math.random() * words.length)];
+    const sym = '!@#$%&*'[Math.floor(Math.random() * 7)];
+    const num = String(100 + Math.floor(Math.random() * 900));
+    return `${pick()}-${pick()}-${pick()}-${num}${sym}`;
+  };
 
   const load = async () => {
     setLoading(true);
@@ -151,14 +173,12 @@ const PeoplePanel = () => {
 
   const invite = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inviteEmail.trim()) return;
+    if (!inviteEmail.trim() || invitePassword.length < 8) return;
     const supa = getSupabase();
     if (!supa) return;
     setInviting(true);
+    setError(null);
     try {
-      // Call the send-invitation edge function directly via fetch so we can
-      // read the response body on non-2xx. (supabase.functions.invoke hides
-      // the body on errors with a generic "non-2xx status code" message.)
       const {
         data: { session },
       } = await supa.auth.getSession();
@@ -175,6 +195,7 @@ const PeoplePanel = () => {
         },
         body: JSON.stringify({
           email: inviteEmail.trim().toLowerCase(),
+          password: invitePassword,
           display_name: inviteName.trim() || null,
           is_admin: inviteAdmin,
         }),
@@ -186,15 +207,28 @@ const PeoplePanel = () => {
             `Edge function ${res.status}: ${res.statusText}`
         );
       }
+      setCreated({ email: inviteEmail.trim().toLowerCase(), password: invitePassword });
       setInviteEmail('');
       setInviteName('');
+      setInvitePassword('');
       setInviteAdmin(false);
       await load();
-      setTab('invites');
     } catch (err: any) {
-      setError(err?.message || 'Could not create invitation.');
+      setError(err?.message || 'Could not create user.');
     } finally {
       setInviting(false);
+    }
+  };
+
+  const copyCreds = async () => {
+    if (!created) return;
+    const text = `Email: ${created.email}\nPassword: ${created.password}\nSign in: ${window.location.origin}/sign-in`;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // Clipboard unavailable — admin can copy by hand.
     }
   };
 
@@ -366,19 +400,71 @@ const PeoplePanel = () => {
       {/* INVITATIONS */}
       {tab === 'invites' && (
         <div className="space-y-4">
-          {/* Invite form */}
+          {/* Success: just-created creds */}
+          {created && (
+            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-5 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="font-display text-lg text-stride-text-strong tracking-tight flex items-center gap-2">
+                    <Check className="w-4 h-4 text-emerald-500" />
+                    User created
+                  </h3>
+                  <p className="text-xs text-stride-text-muted mt-1">
+                    Share these credentials with them out-of-band (Slack, SMS, in
+                    person). They can sign in immediately — no email confirmation
+                    needed.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setCreated(null)}
+                  className="text-stride-text-muted hover:text-stride-text-strong"
+                  aria-label="Dismiss"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="bg-stride-bg-elev border border-stride-border rounded-lg p-3 font-mono text-xs space-y-1">
+                <div>
+                  <span className="text-stride-text-muted">Email:&nbsp;&nbsp;&nbsp;</span>
+                  <span className="text-stride-text-strong">{created.email}</span>
+                </div>
+                <div>
+                  <span className="text-stride-text-muted">Password: </span>
+                  <span className="text-stride-text-strong">{created.password}</span>
+                </div>
+              </div>
+              <button
+                onClick={copyCreds}
+                className="px-4 py-1.5 rounded-full bg-stride-navy text-white text-xs font-medium inline-flex items-center gap-1.5 hover:shadow-md"
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-3.5 h-3.5" />
+                    Copied
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5" />
+                    Copy email + password
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+
+          {/* Create form */}
           <form
             onSubmit={invite}
             className="bg-stride-bg-elev border border-stride-border rounded-2xl p-5 space-y-3"
           >
             <h3 className="font-display text-lg text-stride-text-strong tracking-tight flex items-center gap-2">
               <UserPlus className="w-4 h-4 text-stride-accent" />
-              Invite someone new
+              Create a new user
             </h3>
             <p className="text-xs text-stride-text-muted">
-              We'll email them a branded invite link with one click. When they
-              accept and set a password, they'll be created with the role you
-              pick here.
+              Set their email and password — they can sign in right away at{' '}
+              <code className="font-mono">/sign-in</code>. The account is
+              confirmed automatically; no email link required.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-[1.4fr_1fr_auto] gap-2">
               <input
@@ -407,17 +493,51 @@ const PeoplePanel = () => {
                 Admin
               </label>
             </div>
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2">
+              <div className="relative">
+                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stride-text-muted" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={invitePassword}
+                  onChange={(e) => setInvitePassword(e.target.value)}
+                  placeholder="Password (min. 8 characters)"
+                  required
+                  minLength={8}
+                  autoComplete="new-password"
+                  className="w-full pl-9 pr-10 py-2 rounded-md border border-stride-border bg-stride-bg-elev text-stride-text-strong focus:outline-none focus:ring-2 focus:ring-stride-accent text-sm font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => !s)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-stride-text-muted hover:text-stride-text-strong"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setInvitePassword(generatePassword());
+                  setShowPassword(true);
+                }}
+                className="px-3 py-2 rounded-md border border-stride-border bg-stride-bg text-sm text-stride-text-strong hover:bg-stride-bg-elev inline-flex items-center gap-1.5"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-stride-accent" />
+                Generate
+              </button>
+            </div>
             <div className="flex items-center gap-3">
               <button
                 type="submit"
-                disabled={inviting || !inviteEmail.trim()}
+                disabled={inviting || !inviteEmail.trim() || invitePassword.length < 8}
                 className="px-5 py-2 rounded-full bg-stride-navy text-white font-medium hover:shadow-lg disabled:opacity-60 inline-flex items-center gap-2 text-sm"
               >
-                {inviting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
-                Create invite
+                {inviting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserPlus className="w-3.5 h-3.5" />}
+                Create user
               </button>
               <p className="text-xs text-stride-text-muted">
-                Sends a branded email via Resend with a sign-up link.
+                Creates the account immediately and shows you the password to share.
               </p>
             </div>
           </form>

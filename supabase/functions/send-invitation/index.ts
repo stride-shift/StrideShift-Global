@@ -1,15 +1,18 @@
 // @ts-nocheck — runs in Deno, not Node. Local TS server doesn't know.
 /**
- * send-invitation — admin-only endpoint that:
+ * send-invitation — admin-only endpoint that creates a new user with a
+ * password the admin chose. Sign-up is invite-only, so:
  *   1. Verifies the caller is an admin in public.profiles.
- *   2. Inserts a row into public.pending_invitations (so the trigger lets the
- *      person sign up later).
- *   3. Calls supabase.auth.admin.inviteUserByEmail(), which sends our
- *      branded "Invite" email (the template configured via the Management
- *      API earlier) through Resend SMTP.
+ *   2. Upserts a row into public.pending_invitations so the on-user-created
+ *      trigger (handle_new_user) lets the insert through.
+ *   3. Calls supabase.auth.admin.createUser({ email_confirm: true, password })
+ *      so the user can log in immediately at /sign-in.
+ *   4. Logs invite.sent_with_password to admin_activity.
+ *
+ * The admin shares the password with the new user out-of-band (Slack, etc).
+ * No confirmation email is sent — the account is active on creation.
  *
  * Deploy:  supabase functions deploy send-invitation --no-verify-jwt
- *          (we verify the JWT manually so we get the caller's user_id)
  */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
@@ -21,6 +24,7 @@ const corsHeaders = {
 
 interface Payload {
   email: string;
+  password: string;
   display_name?: string | null;
   is_admin?: boolean;
 }
@@ -37,11 +41,6 @@ Deno.serve(async (req) => {
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
     const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
-    console.log('[send-invitation] env present', {
-      url: !!SUPABASE_URL,
-      service: !!SERVICE_ROLE_KEY,
-      anon: !!ANON_KEY,
-    });
 
     // 1) Authenticate the caller via their JWT.
     const auth = req.headers.get('Authorization') ?? '';
@@ -56,11 +55,9 @@ Deno.serve(async (req) => {
 
     const { data: userData, error: userErr } = await userClient.auth.getUser();
     if (userErr || !userData?.user) {
-      console.error('[send-invitation] getUser failed:', userErr?.message);
       return json({ error: `Invalid session: ${userErr?.message ?? 'no user'}` }, 401);
     }
     const caller = userData.user;
-    console.log('[send-invitation] caller:', caller.email, caller.id);
 
     // 2) Verify the caller is admin (service-role bypasses RLS).
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
@@ -72,7 +69,6 @@ Deno.serve(async (req) => {
       .eq('id', caller.id)
       .maybeSingle();
     if (profileErr) {
-      console.error('[send-invitation] profile lookup failed:', profileErr.message);
       return json({ error: `Profile lookup: ${profileErr.message}` }, 500);
     }
     if (!profile?.is_admin) {
@@ -90,11 +86,15 @@ Deno.serve(async (req) => {
     if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
       return json({ error: 'A valid email is required' }, 400);
     }
+    const password = body.password ?? '';
+    if (password.length < 8) {
+      return json({ error: 'Password must be at least 8 characters' }, 400);
+    }
     const displayName = body.display_name?.trim() || null;
     const isAdmin = Boolean(body.is_admin);
-    console.log('[send-invitation] inviting:', { email, displayName, isAdmin });
 
-    // 4) Upsert pending invitation so the sign-up trigger lets them through.
+    // 4) Upsert pending invitation so the on-user-created trigger sees it
+    //    and stamps the profile with the right role + display name.
     const { error: upsertErr } = await admin
       .from('pending_invitations')
       .upsert(
@@ -108,42 +108,45 @@ Deno.serve(async (req) => {
         { onConflict: 'email' }
       );
     if (upsertErr) {
-      console.error('[send-invitation] upsert failed:', upsertErr.message);
       return json({ error: `Could not save invitation: ${upsertErr.message}` }, 500);
     }
 
-    // 5) Send the branded invite email. NOTE: redirectTo must be in your
-    //    Supabase Auth → URL Configuration allow-list, otherwise Supabase
-    //    silently falls back to Site URL. We omit it here to use the Site URL.
-    const { data: inviteData, error: inviteErr } = await admin.auth.admin.inviteUserByEmail(email, {
-      data: {
+    // 5) Create the user directly with the supplied password. email_confirm:
+    //    true skips the confirmation email — they can sign in immediately.
+    const { data: created, error: createErr } = await admin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: {
         full_name: displayName,
         invited_by_admin: true,
       },
     });
-    if (inviteErr) {
-      console.error('[send-invitation] inviteUserByEmail failed:', JSON.stringify(inviteErr));
+    if (createErr) {
       // Roll back the invitation insert so admin can retry cleanly.
       await admin.from('pending_invitations').delete().eq('email', email);
       const msg =
-        (inviteErr as { message?: string }).message ||
-        (inviteErr as { error_description?: string }).error_description ||
-        JSON.stringify(inviteErr);
-      return json({ error: `Email send failed: ${msg}` }, 502);
+        (createErr as { message?: string }).message ||
+        (createErr as { error_description?: string }).error_description ||
+        JSON.stringify(createErr);
+      return json({ error: `User creation failed: ${msg}` }, 502);
     }
-    console.log('[send-invitation] invite sent:', inviteData?.user?.id);
 
     // 6) Log to admin_activity so it appears in People → Activity.
     await admin.from('admin_activity').insert({
       admin_id: caller.id,
-      action: 'invite.sent',
+      action: 'invite.sent_with_password',
       resource: `email:${email}`,
       metadata: { is_admin: isAdmin, display_name: displayName },
     });
 
-    return json({ ok: true, email, is_admin: isAdmin });
+    return json({
+      ok: true,
+      email,
+      is_admin: isAdmin,
+      user_id: created?.user?.id ?? null,
+    });
   } catch (e) {
-    console.error('[send-invitation] unhandled:', e);
     const msg = e instanceof Error ? e.message : String(e);
     return json({ error: `Unhandled: ${msg}` }, 500);
   }
