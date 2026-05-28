@@ -9,6 +9,7 @@ import {
   Check,
   X,
   RefreshCcw,
+  Trash2,
   KeyRound,
   Copy,
   Eye,
@@ -244,6 +245,47 @@ const PeoplePanel = () => {
     }
   };
 
+  const deleteUser = async (target: Profile) => {
+    if (target.id === user?.id) return;
+    const label = target.display_name || target.email || target.id;
+    const ok = window.confirm(
+      `Delete ${label}?\n\nThis removes their account, profile, and any pending invitation. They can be re-invited later. This cannot be undone.`
+    );
+    if (!ok) return;
+    const supa = getSupabase();
+    if (!supa) return;
+    try {
+      const {
+        data: { session },
+      } = await supa.auth.getSession();
+      if (!session) throw new Error('Not signed in.');
+      const fnUrl =
+        (import.meta.env.VITE_SUPABASE_URL as string).replace(/\/$/, '') +
+        '/functions/v1/delete-user';
+      const res = await fetch(fnUrl, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          apikey: import.meta.env.VITE_SUPABASE_ANON_KEY as string,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user_id: target.id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(
+          (data as { error?: string }).error ||
+            `Edge function ${res.status}: ${res.statusText}`
+        );
+      }
+      // Drop from local state immediately so the row disappears without a refetch.
+      setProfiles((rows) => rows.filter((r) => r.id !== target.id));
+      void load();
+    } catch (err: any) {
+      setError(err?.message || 'Could not delete user.');
+    }
+  };
+
   const revokeInvite = async (inv: PendingInvitation) => {
     const supa = getSupabase();
     if (!supa) return;
@@ -401,6 +443,7 @@ const PeoplePanel = () => {
                     isSelf={p.id === user?.id}
                     onToggleAdmin={() => toggleAdmin(p)}
                     onRename={(name) => setDisplayName(p, name)}
+                    onDelete={() => deleteUser(p)}
                   />
                 ))}
               </tbody>
@@ -704,11 +747,13 @@ const ProfileRow = ({
   isSelf,
   onToggleAdmin,
   onRename,
+  onDelete,
 }: {
   profile: Profile;
   isSelf: boolean;
   onToggleAdmin: () => void;
   onRename: (name: string) => void;
+  onDelete: () => void;
 }) => {
   const [editing, setEditing] = useState(false);
   const [draftName, setDraftName] = useState(profile.display_name ?? '');
@@ -795,10 +840,19 @@ const ProfileRow = ({
       </td>
       <td className="px-4 py-3 text-stride-text-muted font-mono text-xs">{fmt(profile.created_at)}</td>
       <td className="px-4 py-3 text-right">
-        {isSelf && (
+        {isSelf ? (
           <span className="text-[10px] uppercase tracking-wider text-stride-text-muted">
             You
           </span>
+        ) : (
+          <button
+            onClick={onDelete}
+            className="p-1.5 rounded-md text-stride-text-muted hover:text-red-500 hover:bg-red-500/10 transition-colors"
+            aria-label={`Delete ${profile.display_name || profile.email || 'user'}`}
+            title="Delete user"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
         )}
       </td>
     </tr>
