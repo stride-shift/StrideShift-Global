@@ -11,8 +11,8 @@ export const site = {
   url: 'https://www.strideshift.ai',
   tagline: 'From messy problem to clear action — in days, not months.',
   description:
-    'StrideShift is an AI-powered think tank for leadership teams facing complex, open-ended challenges.',
-  email: 'hello@strideshift.ai',
+    'StrideShift is an AI-powered think tank for teams facing complex, open-ended challenges.',
+  email: 'hq@strideshift.ai',
 };
 
 export const nav = [
@@ -30,8 +30,10 @@ export const nav = [
 export const hero = {
   eyebrow: 'StrideShift Global',
   title: 'From messy problem to clear action — in days, not months',
+  // Kept distinct from the hero subhead — the same "AI-powered think tank…"
+  // sentence used to appear in both places on the homepage.
   highlight:
-    'StrideShift is an AI-powered think tank for leadership teams facing complex, open-ended challenges.',
+    'Deep strategic experience, amplified by AI — working as an extension of your team.',
   description:
     "The hardest business problems don't come with instruction manuals. They're ambiguous, politically charged, and time-sensitive. Traditional consulting takes too long. Internal teams are stretched too thin. And AI experiments aren't connecting to outcomes that matter.",
   description2:
@@ -45,7 +47,6 @@ export const hero = {
     'Drowning in data but starving for insight',
     "Team is experimenting with AI but nothing's sticking",
     'Sales cycles lengthening, win rates dropping',
-    'Chasing every RFP instead of the right ones',
     'AI governance feels like innovation vs. control',
   ],
 };
@@ -54,12 +55,12 @@ export const hero = {
    STATS — real numbers from the live site
    ============================================ */
 export const marqueeStats = [
-  { strong: '60+', label: 'Clients' },
-  { strong: '16', label: 'African countries' },
-  { strong: '3', label: 'Continents served' },
-  { strong: '9', label: 'AI products shipped' },
+  { strong: '30+', label: 'Clients' },
+  { strong: '16', label: 'Countries' },
+  { strong: '3', label: 'Continents' },
+  { strong: '23', label: 'AI products shipped' },
   { strong: 'R200M+', label: 'Decisions supported' },
-  { strong: '18', label: 'Months of CCBA programme' },
+  { strong: '∞', label: 'Customer problems solved' },
 ];
 
 /* ============================================
@@ -415,6 +416,20 @@ export const teamPage = {
       photo:
         'https://static.wixstatic.com/media/b9e36b_c30110a0b9574d4f84b16340afa96fab~mv2.jpeg/v1/fill/w_960,h_1280,al_c,q_85,enc_avif,quality_auto/WhatsApp%20Image%202025-02-14%20at%2012_03_08.jpeg',
     },
+    {
+      initials: 'AI',
+      name: 'Cornelia',
+      role: 'AI Agent · Enterprise Intelligence — paired with Stephen Green',
+      bio: "Stephen's AI counterpart. Cornelia scans markets around the clock, tracks the signals that matter, and turns raw noise into decision-ready briefs — the always-on half of an enterprise intelligence partnership.",
+      photo: '/team/cornelia.svg',
+    },
+    {
+      initials: 'AI',
+      name: 'Juno Finn',
+      role: 'AI Agent · Reasoning Systems — paired with Justin Germishuys',
+      bio: "Justin's AI counterpart. Juno Finn stress-tests arguments, hunts hidden assumptions, and runs structured reasoning at machine speed — a devil's advocate that never gets tired.",
+      photo: '/team/juno-finn.svg',
+    },
   ],
   ctaTitle: 'Work alongside us',
   ctaSub:
@@ -430,7 +445,7 @@ export const contactPage = {
   tagline:
     "About what's keeping you up at night. Tell us the challenge you're facing — we'll listen first, then show you whether and how we can help. No pitch decks. No pressure.",
   contactLines: [
-    { label: 'Email', value: 'hello@strideshift.ai' },
+    { label: 'Email', value: 'hq@strideshift.ai' },
     { label: 'Hours', value: 'Mon – Fri, by appointment' },
   ],
 };

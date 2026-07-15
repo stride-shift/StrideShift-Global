@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight, MessageSquare } from 'lucide-react';
 
-// Sized for a full sentence (the heroSubhead), not a billboard headline.
-// If you switch this hero back to rendering a short headline, bump these up.
+// Billboard sizes — the headline is a short statement with a rotating word.
 const HEADLINE_SIZE: Record<'sm' | 'md' | 'lg' | 'xl', string> = {
-  sm: 'text-lg sm:text-xl lg:text-2xl',
-  md: 'text-xl sm:text-2xl lg:text-3xl',
-  lg: 'text-2xl sm:text-3xl lg:text-4xl',
-  xl: 'text-3xl sm:text-4xl lg:text-5xl',
+  sm: 'text-3xl sm:text-4xl lg:text-5xl',
+  md: 'text-4xl sm:text-5xl lg:text-6xl',
+  lg: 'text-4xl sm:text-5xl lg:text-6xl xl:text-7xl',
+  xl: 'text-5xl sm:text-6xl lg:text-7xl xl:text-8xl',
 };
 import { Link } from 'react-router-dom';
 import { hero, marqueeStats } from '@/data/stride';
@@ -17,6 +16,7 @@ import FluidShader from '@/components/ui/fluid-shader';
 import TextReveal from '@/components/motion/TextReveal';
 import MagneticButton from '@/components/motion/MagneticButton';
 import CountUp from '@/components/motion/CountUp';
+import RotatingWord from '@/components/motion/RotatingWord';
 
 /**
  * "Fluid" hero — the new flagship.
@@ -94,22 +94,39 @@ const HeroFluid = () => {
             settings.heroAlign === 'center' ? 'text-center' : ''
           }`}
         >
-          <div className={`max-w-xl ${settings.heroAlign === 'center' ? 'mx-auto' : ''}`}>
-            {/* Single statement — the only text on the hero. Pulled from
-                heroSubhead (admin-editable) so it can be updated without code. */}
+          <div className={`max-w-2xl ${settings.heroAlign === 'center' ? 'mx-auto' : ''}`}>
+            {/* Headline + rotating word (admin-editable: Landing tab). When
+                heroRotatingWords is empty the headline renders static. */}
             <h1
-              className={`font-display leading-snug tracking-tight ${HEADLINE_SIZE[settings.heroHeadlineSize]}`}
-              style={{ color: settings.heroHeadlineColor || settings.heroSubheadColor || undefined }}
+              className={`font-display leading-[1.08] tracking-tight text-stride-cream ${HEADLINE_SIZE[settings.heroHeadlineSize]}`}
+              style={{ color: settings.heroHeadlineColor || undefined }}
             >
               <TextReveal
                 as="span"
-                text={settings.heroSubhead || settings.heroHeadline}
+                text={settings.heroHeadline}
                 className="block"
                 staggerMs={75}
                 initialDelayMs={150}
                 immediate
               />
+              {settings.heroRotatingWords.trim() && (
+                <span className="block mt-1">
+                  <RotatingWord
+                    words={settings.heroRotatingWords.split(',')}
+                    className="text-stride-gold"
+                  />
+                </span>
+              )}
             </h1>
+
+            {settings.heroSubhead && (
+              <p
+                className="mt-7 text-base sm:text-lg text-stride-cream/80 leading-relaxed max-w-xl"
+                style={{ color: settings.heroSubheadColor || undefined }}
+              >
+                {settings.heroSubhead}
+              </p>
+            )}
 
             {/* CTAs — primary magnetic, secondary subtle glass */}
             <div
@@ -155,7 +172,7 @@ const HeroFluid = () => {
                 settings.heroAlign === 'center' ? 'justify-center' : ''
               }`}
             >
-              {['60+ clients', '16 African countries', '9 AI products shipped'].map((t) => (
+              {['30+ clients', '16 countries, 3 continents', '23 AI products shipped'].map((t) => (
                 <span key={t} className="flex items-center gap-1.5">
                   <span className="w-1 h-1 rounded-full bg-stride-sage" />
                   {t}
@@ -169,7 +186,7 @@ const HeroFluid = () => {
       {/* ---------- Stat strip on cream ---------- */}
       <div className="relative z-10 bg-stride-cream border-y border-stride-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-7">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-x-6 gap-y-5">
             {marqueeStats.map((s) => {
               // Extract a numeric end value from strings like "60+", "R200M+", "16"
               const m = s.strong.match(/(\d+(?:[.,]\d+)?)/);

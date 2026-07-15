@@ -103,6 +103,10 @@ export interface SiteSettings {
   heroTemplate: HeroTemplate;
   heroImageUrl: string;
   heroHeadline: string;
+  /** Comma-separated words. When non-empty, the Fluid hero renders
+   *  `heroHeadline` with a rotating word carousel appended (Wix-style
+   *  scrolling word). Empty string = static headline only. */
+  heroRotatingWords: string;
   heroSubhead: string;
   heroAlign: HeroAlign;
   heroHeadlineSize: HeroHeadlineSize;
@@ -123,9 +127,11 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1920&q=80',
   // Kept distinct from the "From messy problem…" headline in the Sound Familiar
   // section below — the hero sets the tone, that section carries the detail.
-  heroHeadline: 'Clarity for the decisions that matter most.',
+  // The rotating words complete the headline: "Better thinking, better ___".
+  heroHeadline: 'Better thinking, better',
+  heroRotatingWords: 'results, decisions, strategy, performance',
   heroSubhead:
-    'An AI-powered think tank for leadership teams facing complex, open-ended challenges and making high-stakes decisions.',
+    'An AI-powered think tank for teams facing complex, open-ended challenges and making high-stakes decisions.',
   heroAlign: 'left',
   heroHeadlineSize: 'lg',
   heroHeadlineColor: '#ffffff',
@@ -144,7 +150,9 @@ export const DEFAULT_SETTINGS: SiteSettings = {
 // v3 — bumped when the hero copy changed to the new "AI-powered think tank
 // … high-stakes decisions" sentence so existing visitors see the new default
 // instead of their cached v2 subhead.
-const STORAGE_KEY = 'stride-site-settings-v3';
+// v4 — bumped for the "Better thinking, better ___" rotating-word headline
+// and the subhead dropping "leadership".
+const STORAGE_KEY = 'stride-site-settings-v4';
 const SETTINGS_ROW_ID = 1;
 
 interface SiteSettingsState {

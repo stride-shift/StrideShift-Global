@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" role="img" aria-label="Juno Finn — AI agent">
+  <defs>
+    <radialGradient id="bg" cx="65%" cy="26%" r="95%">
+      <stop offset="0%" stop-color="#24422f"/>
+      <stop offset="55%" stop-color="#13291e"/>
+      <stop offset="100%" stop-color="#0a1610"/>
+    </radialGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#9fd0a8"/>
+      <stop offset="60%" stop-color="#5f9a6c"/>
+      <stop offset="100%" stop-color="#d9b96a"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="46%" r="40%">
+      <stop offset="0%" stop-color="#9fd0a8" stop-opacity="0.5"/>
+      <stop offset="70%" stop-color="#9fd0a8" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#9fd0a8" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="scan" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#ffffff" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="800" height="800" fill="url(#bg)"/>
+
+  <!-- fine grid -->
+  <g stroke="#9fd0a8" stroke-opacity="0.07" stroke-width="1">
+    <path d="M0 160 H800 M0 320 H800 M0 480 H800 M0 640 H800"/>
+    <path d="M160 0 V800 M320 0 V800 M480 0 V800 M640 0 V800"/>
+  </g>
+
+  <!-- reasoning tree — branching argument paths -->
+  <g stroke="#9fd0a8" stroke-opacity="0.28" stroke-width="1.5" fill="none">
+    <path d="M120 690 C 200 560, 260 520, 330 470 M330 470 C 300 380, 310 330, 350 270 M330 470 C 420 430, 500 440, 560 400 M560 400 C 620 340, 640 300, 690 270 M560 400 C 600 470, 640 500, 700 520"/>
+  </g>
+  <g fill="#9fd0a8">
+    <circle cx="120" cy="690" r="4" opacity="0.7"/>
+    <circle cx="350" cy="270" r="3.5" opacity="0.7"/>
+    <circle cx="690" cy="270" r="4" opacity="0.8"/>
+    <circle cx="700" cy="520" r="3" opacity="0.6"/>
+  </g>
+
+  <circle cx="400" cy="368" r="240" fill="url(#glow)"/>
+
+  <!-- orbital rings — echo of the StrideShift ring mark -->
+  <g fill="none">
+    <circle cx="400" cy="368" r="188" stroke="url(#ring)" stroke-width="30"/>
+    <circle cx="400" cy="368" r="234" stroke="#9fd0a8" stroke-opacity="0.30" stroke-width="2" stroke-dasharray="2 10"/>
+    <ellipse cx="400" cy="368" rx="296" ry="126" stroke="#d9b96a" stroke-opacity="0.35" stroke-width="1.6" transform="rotate(22 400 368)"/>
+  </g>
+  <circle cx="140" cy="300" r="7" fill="#d9b96a"/>
+  <circle cx="632" cy="474" r="6" fill="#9fd0a8"/>
+
+  <!-- monogram -->
+  <text x="400" y="418" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="140" fill="#f0eee2" letter-spacing="4">JF</text>
+
+  <rect width="800" height="800" fill="url(#scan)"/>
+
+  <!-- name plate -->
+  <g font-family="'Segoe UI', Helvetica, Arial, sans-serif">
+    <text x="400" y="672" text-anchor="middle" font-size="44" font-weight="600" fill="#f0eee2" letter-spacing="10">JUNO FINN</text>
+    <text x="400" y="716" text-anchor="middle" font-size="19" fill="#a9c9ae" letter-spacing="6">AI AGENT · REASONING SYSTEMS</text>
+  </g>
+</svg>

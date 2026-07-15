@@ -8,6 +8,7 @@ import { useSiteContent } from '@/hooks/useSiteContent';
 import { useTheme } from '@/hooks/useTheme';
 import { GLSLHills } from '@/components/ui/glsl-hills';
 import SectionEyebrow from '@/components/SectionEyebrow';
+import PageSections from '@/components/editor/PageSections';
 
 const container = {
   hidden: { opacity: 0 },
@@ -76,7 +77,10 @@ const Team = () => {
         description="Meet the StrideShift team: AI specialists, strategists, and technologists bringing decades of experience in AI, enterprise transformation, and human-centred design."
       />
 
-      {/* ====== HERO with mountain scene ====== */}
+      <PageSections
+        page="team"
+        sections={{
+          hero: (
       <section
         className="relative pt-28 md:pt-36 pb-16 md:pb-20 overflow-hidden text-stride-cream"
         style={{ backgroundColor: heroBg }}
@@ -186,7 +190,8 @@ const Team = () => {
         </div>
       </section>
 
-      {/* ====== Members grid — 4 on top, 3 on bottom ====== */}
+          ),
+          members: (
       <section className="py-16 md:py-24 bg-stride-bg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {topRow.length > 0 && (
@@ -219,7 +224,8 @@ const Team = () => {
         </div>
       </section>
 
-      {/* ====== CTA ====== */}
+          ),
+          cta: (
       <section className="py-16 md:py-24 bg-stride-navy text-white text-center">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="font-display text-3xl md:text-4xl lg:text-5xl mb-4 tracking-tight">
@@ -235,6 +241,9 @@ const Team = () => {
           </Link>
         </div>
       </section>
+          ),
+        }}
+      />
     </PageLayout>
   );
 };

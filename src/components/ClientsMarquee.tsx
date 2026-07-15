@@ -18,7 +18,7 @@ const CLIENTS: ClientBrand[] = [
   { name: 'BriteHouse', src: '/clients/britehouse.png' },
   { name: 'Ctrack', src: '/clients/ctrack.png' },
   { name: 'Dandemutande', src: '/clients/dandemutande.png' },
-  { name: 'GSK', src: '/clients/gsk.png' },
+  { name: 'Implats', src: '/clients/implats.png' },
   { name: 'Masterdrive', src: '/clients/masterdrive.png' },
   { name: 'Maxtec', src: '/clients/maxtec.png' },
   { name: 'Myriad Capital', src: '/clients/myriad-capital.png' },
@@ -38,7 +38,7 @@ const LogoTile = ({ client }: { client: ClientBrand }) => (
       src={client.src}
       alt={`${client.name} logo`}
       loading="lazy"
-      className="max-h-16 max-w-[160px] w-auto h-auto object-contain opacity-60 group-hover:opacity-100 transition-opacity duration-300"
+      className="max-h-16 max-w-[160px] w-auto h-auto object-contain opacity-85 group-hover:opacity-100 transition-opacity duration-300"
     />
   </div>
 );
@@ -55,31 +55,38 @@ const ClientsMarquee = () => {
             Our Valued Clients
           </h2>
           <p className="text-stride-text-muted mt-3 max-w-xl mx-auto">
-            60+ organisations across 16 African countries and three continents.
+            30+ organisations across 16 countries and three continents.
           </p>
         </div>
+      </div>
 
-        {/* Single clean marquee row of logo tiles */}
-        <div
-          className="relative reveal-on-scroll delay-1"
-          onMouseEnter={() => setPaused(true)}
-          onMouseLeave={() => setPaused(false)}
-        >
-          <div className="absolute left-0 top-0 bottom-0 w-12 md:w-20 bg-gradient-to-r from-stride-bg to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-12 md:w-20 bg-gradient-to-l from-stride-bg to-transparent z-10 pointer-events-none" />
-
-          <div className="flex w-max">
-            <div
-              className={`flex items-center ${paused ? '' : 'animate-marquee-slow'}`}
-              style={{ animationPlayState: paused ? 'paused' : 'running' }}
-            >
-              {CLIENTS.map((c) => (
-                <LogoTile key={`a-${c.name}`} client={c} />
-              ))}
-              {CLIENTS.map((c) => (
-                <LogoTile key={`b-${c.name}`} client={c} />
-              ))}
-            </div>
+      {/* Full-bleed marquee — lives outside the centred container so the edge
+          fades sit at the true viewport edges (not inset over a tile). The row
+          is faded with a mask so tiles dissolve into the background cleanly in
+          both light and dark themes, instead of a coloured gradient painting a
+          dark band over the white logo plates. */}
+      <div
+        className="relative reveal-on-scroll delay-1"
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+        style={{
+          WebkitMaskImage:
+            'linear-gradient(to right, transparent 0, #000 6%, #000 94%, transparent 100%)',
+          maskImage:
+            'linear-gradient(to right, transparent 0, #000 6%, #000 94%, transparent 100%)',
+        }}
+      >
+        <div className="flex w-max">
+          <div
+            className={`flex items-center ${paused ? '' : 'animate-marquee-slow'}`}
+            style={{ animationPlayState: paused ? 'paused' : 'running' }}
+          >
+            {CLIENTS.map((c) => (
+              <LogoTile key={`a-${c.name}`} client={c} />
+            ))}
+            {CLIENTS.map((c) => (
+              <LogoTile key={`b-${c.name}`} client={c} />
+            ))}
           </div>
         </div>
       </div>

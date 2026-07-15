@@ -12,7 +12,8 @@ import {
   AlertTriangle,
   Loader2,
   ArrowUpRight,
-  Check,
+  Paintbrush,
+  ExternalLink,
 } from 'lucide-react';
 import SEO from '@/components/SEO';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -20,7 +21,7 @@ import Logo from '@/components/Logo';
 import { useAuth } from '@/hooks/useAuth';
 import { useSiteContent } from '@/hooks/useSiteContent';
 import { getSupabase } from '@/lib/supabase';
-import { showcase, posts } from '@/data/stride';
+import { PAGE_LABELS, PAGE_PATHS, PAGE_SECTIONS, PageId } from '@/lib/sections';
 import AnalyticsPanel from '@/components/admin/AnalyticsPanel';
 import ContentPanel from '@/components/admin/ContentPanel';
 import LandingSettingsPanel from '@/components/admin/LandingSettingsPanel';
@@ -41,7 +42,7 @@ const Admin = () => {
   const [enrollError, setEnrollError] = useState<string | null>(null);
   const { content } = useSiteContent();
   const [tab, setTab] = useState<
-    'overview' | 'analytics' | 'landing' | 'content' | 'messages' | 'people'
+    'overview' | 'design' | 'analytics' | 'landing' | 'content' | 'messages' | 'people'
   >('overview');
 
   useEffect(() => {
@@ -148,9 +149,14 @@ const Admin = () => {
     );
   }
 
+  // Counts come from the live editable content, not the static defaults —
+  // so posts/solutions added in the Content tab are reflected here.
+  const sortedPosts = [...content.posts].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
   const stats = [
-    stat('Solutions', showcase.items.length, <Box className="w-5 h-5" />, 'Live products'),
-    stat('Ideas', posts.length, <FileText className="w-5 h-5" />, 'Published'),
+    stat('Solutions', content.solutions.length, <Box className="w-5 h-5" />, 'Live products'),
+    stat('Ideas', content.posts.length, <FileText className="w-5 h-5" />, 'Published'),
     stat('Voices', content.testimonials.length, <MessageSquareQuote className="w-5 h-5" />, 'Testimonials'),
     stat('Team', content.team.members.length, <Users className="w-5 h-5" />, 'Members'),
   ];
@@ -224,7 +230,7 @@ const Admin = () => {
 
         {/* Tabs — pill style, modern */}
         <div className="inline-flex bg-stride-bg-elev border border-stride-border rounded-full p-1 mb-8 shadow-sm">
-          {(['overview', 'analytics', 'landing', 'content', 'messages', 'people'] as const).map((t) => (
+          {(['overview', 'design', 'analytics', 'landing', 'content', 'messages', 'people'] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -247,7 +253,7 @@ const Admin = () => {
                 Recent ideas
               </h3>
               <ul className="space-y-3">
-                {posts.slice(0, 3).map((p) => (
+                {sortedPosts.slice(0, 3).map((p) => (
                   <li
                     key={p.slug}
                     className="flex items-start justify-between gap-3 pb-3 border-b border-stride-border/60 last:border-0 last:pb-0"
@@ -274,7 +280,7 @@ const Admin = () => {
                 Top solutions
               </h3>
               <ul className="space-y-3">
-                {showcase.items.slice(0, 5).map((s) => (
+                {content.solutions.slice(0, 5).map((s) => (
                   <li
                     key={s.slug}
                     className="flex items-center justify-between gap-3 pb-3 border-b border-stride-border/60 last:border-0 last:pb-0"
@@ -304,12 +310,20 @@ const Admin = () => {
                     Run the StrideShift site
                   </h3>
                   <p className="text-white/85 mb-4">
+                    <strong>Design</strong> — arrange every page visually: drag sections, hide
+                    them, restyle colours and spacing.{' '}
                     <strong>Analytics</strong> — live pageviews, sessions and clicks.{' '}
                     <strong>Landing</strong> — pick a hero template and edit the headline + image.{' '}
                     <strong>Content</strong> — edit testimonials, team and homepage copy. Every
                     change saves to Supabase and goes live instantly.
                   </p>
                   <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => setTab('design')}
+                      className="px-3.5 py-1.5 rounded-md bg-white/10 hover:bg-white/20 text-sm font-medium transition-colors"
+                    >
+                      Design pages
+                    </button>
                     <button
                       onClick={() => setTab('analytics')}
                       className="px-3.5 py-1.5 rounded-md bg-white/10 hover:bg-white/20 text-sm font-medium transition-colors"
@@ -331,6 +345,56 @@ const Admin = () => {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {tab === 'design' && (
+          <div>
+            <div className="bg-stride-bg-elev border border-stride-border rounded-2xl p-6 mb-5">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-lg bg-stride-accent/15 text-stride-accent flex items-center justify-center flex-shrink-0">
+                  <Paintbrush className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-display text-xl text-stride-text-strong tracking-tight mb-1">
+                    Visual page editor
+                  </h3>
+                  <p className="text-sm text-stride-text-muted leading-relaxed">
+                    Open any page in design mode and edit it in place, Wix-style: drag the
+                    handle to move sections around, use the eye to hide a section, and the
+                    palette to change its background, text colour and spacing. Changes save
+                    automatically and go live for every visitor. Copy and images are edited in
+                    the <button onClick={() => setTab('content')} className="underline text-stride-accent">Content</button> and{' '}
+                    <button onClick={() => setTab('landing')} className="underline text-stride-accent">Landing</button> tabs.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {(Object.keys(PAGE_PATHS) as PageId[]).map((p) => (
+                <div
+                  key={p}
+                  className="bg-stride-bg-elev border border-stride-border rounded-2xl p-6 hover:shadow-xl hover:-translate-y-0.5 transition-all flex flex-col"
+                >
+                  <h4 className="font-display text-lg text-stride-text-strong tracking-tight mb-1">
+                    {PAGE_LABELS[p]}
+                  </h4>
+                  <p className="text-xs text-stride-text-muted leading-relaxed mb-4 flex-grow">
+                    {PAGE_SECTIONS[p].length} sections ·{' '}
+                    {PAGE_SECTIONS[p].map((s) => s.label).join(' · ')}
+                  </p>
+                  <Link
+                    to={`${PAGE_PATHS[p]}?edit=1`}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-stride-navy text-white text-sm font-medium hover:bg-stride-navy/90 transition-colors w-fit"
+                  >
+                    <Paintbrush className="w-3.5 h-3.5" />
+                    Open visual editor
+                    <ExternalLink className="w-3 h-3 opacity-70" />
+                  </Link>
+                </div>
+              ))}
             </div>
           </div>
         )}

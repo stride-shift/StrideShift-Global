@@ -5,6 +5,7 @@ import ContactForm from '@/components/ContactForm';
 import { useSiteContent } from '@/hooks/useSiteContent';
 import PageHeroBackground from '@/components/PageHeroBackground';
 import SectionEyebrow from '@/components/SectionEyebrow';
+import PageSections from '@/components/editor/PageSections';
 
 const EXTRA_SIZE: Record<'sm' | 'md' | 'lg', string> = {
   sm: 'text-sm',
@@ -29,7 +30,10 @@ const Contact = () => {
         description="Tell us the challenge you're facing — we'll listen first, then show you whether and how we can help. No pitch decks. No pressure."
       />
 
-      {/* Hero */}
+      <PageSections
+        page="contact"
+        sections={{
+          hero: (
       <section className="relative pt-28 md:pt-36 pb-12 md:pb-16 text-white overflow-hidden">
         <PageHeroBackground />
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -54,7 +58,7 @@ const Contact = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-base sm:text-lg text-white/85 max-w-3xl mx-auto leading-relaxed"
+            className="text-base sm:text-lg text-white/85 max-w-2xl mx-auto leading-relaxed [text-wrap:balance]"
           >
             {contact.tagline}
           </motion.p>
@@ -80,7 +84,8 @@ const Contact = () => {
         </div>
       </section>
 
-      {/* Form + video */}
+          ),
+          form: (
       <section className="py-16 md:py-24 bg-stride-bg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
@@ -103,6 +108,9 @@ const Contact = () => {
           </div>
         </div>
       </section>
+          ),
+        }}
+      />
     </PageLayout>
   );
 };

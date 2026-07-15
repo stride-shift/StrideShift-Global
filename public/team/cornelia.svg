@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" role="img" aria-label="Cornelia — AI agent">
+  <defs>
+    <radialGradient id="bg" cx="35%" cy="28%" r="95%">
+      <stop offset="0%" stop-color="#1e3a5f"/>
+      <stop offset="55%" stop-color="#122036"/>
+      <stop offset="100%" stop-color="#0a1424"/>
+    </radialGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7db8e8"/>
+      <stop offset="60%" stop-color="#4a7fb5"/>
+      <stop offset="100%" stop-color="#d9b96a"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="46%" r="40%">
+      <stop offset="0%" stop-color="#7db8e8" stop-opacity="0.55"/>
+      <stop offset="70%" stop-color="#7db8e8" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#7db8e8" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="scan" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#ffffff" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="800" height="800" fill="url(#bg)"/>
+
+  <!-- fine grid -->
+  <g stroke="#7db8e8" stroke-opacity="0.07" stroke-width="1">
+    <path d="M0 160 H800 M0 320 H800 M0 480 H800 M0 640 H800"/>
+    <path d="M160 0 V800 M320 0 V800 M480 0 V800 M640 0 V800"/>
+  </g>
+
+  <!-- constellation / signal nodes -->
+  <g fill="#7db8e8">
+    <circle cx="128" cy="118" r="4" opacity="0.8"/>
+    <circle cx="676" cy="156" r="3" opacity="0.6"/>
+    <circle cx="704" cy="560" r="4" opacity="0.7"/>
+    <circle cx="110" cy="612" r="3" opacity="0.5"/>
+    <circle cx="590" cy="84" r="2.5" opacity="0.5"/>
+  </g>
+  <g stroke="#7db8e8" stroke-opacity="0.25" stroke-width="1.5" fill="none">
+    <path d="M128 118 L 246 210 M676 156 L 566 246 M704 560 L 586 470 M110 612 L 236 508"/>
+  </g>
+
+  <circle cx="400" cy="368" r="240" fill="url(#glow)"/>
+
+  <!-- orbital rings — echo of the StrideShift ring mark -->
+  <g fill="none">
+    <circle cx="400" cy="368" r="188" stroke="url(#ring)" stroke-width="30"/>
+    <circle cx="400" cy="368" r="238" stroke="#7db8e8" stroke-opacity="0.30" stroke-width="2" stroke-dasharray="4 14"/>
+    <ellipse cx="400" cy="368" rx="300" ry="120" stroke="#d9b96a" stroke-opacity="0.35" stroke-width="1.6" transform="rotate(-18 400 368)"/>
+  </g>
+  <circle cx="668" cy="290" r="8" fill="#d9b96a"/>
+  <circle cx="196" cy="486" r="6" fill="#7db8e8"/>
+
+  <!-- monogram -->
+  <text x="400" y="418" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="150" fill="#f3ede1" letter-spacing="2">C</text>
+
+  <rect width="800" height="800" fill="url(#scan)"/>
+
+  <!-- name plate -->
+  <g font-family="'Segoe UI', Helvetica, Arial, sans-serif">
+    <text x="400" y="672" text-anchor="middle" font-size="44" font-weight="600" fill="#f3ede1" letter-spacing="10">CORNELIA</text>
+    <text x="400" y="716" text-anchor="middle" font-size="19" fill="#9db8d4" letter-spacing="6">AI AGENT · ENTERPRISE INTELLIGENCE</text>
+  </g>
+</svg>

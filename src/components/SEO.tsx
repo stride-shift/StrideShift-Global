@@ -30,7 +30,7 @@ const DEFAULT_KEYWORDS = [
 
 const SEO: React.FC<SEOProps> = ({
   title = 'StrideShift — AI-powered think tank for leaders',
-  description = 'StrideShift is an AI-powered think tank for leadership teams facing complex, open-ended challenges. From messy problem to clear action — in days, not months.',
+  description = 'StrideShift is an AI-powered think tank for teams facing complex, open-ended challenges. From messy problem to clear action — in days, not months.',
   type = 'website',
   name = SITE_NAME,
   imageUrl = '/og-image.png',
@@ -50,11 +50,11 @@ const SEO: React.FC<SEOProps> = ({
     '@type': 'Organization',
     name: SITE_NAME,
     url: SITE_URL,
-    description: 'AI-powered think tank for leadership teams facing complex, open-ended challenges.',
+    description: 'AI-powered think tank for teams facing complex, open-ended challenges.',
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'customer service',
-      email: 'hello@strideshift.ai',
+      email: 'hq@strideshift.ai',
     },
   };
 

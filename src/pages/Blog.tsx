@@ -10,6 +10,7 @@ import { ideasPage } from '@/data/stride';
 import { useSiteContent } from '@/hooks/useSiteContent';
 import PageHeroBackground from '@/components/PageHeroBackground';
 import SectionEyebrow from '@/components/SectionEyebrow';
+import PageSections from '@/components/editor/PageSections';
 
 const Blog = () => {
   const { content } = useSiteContent();
@@ -27,6 +28,10 @@ const Blog = () => {
         imageUrl={featuredPost?.image}
       />
 
+      <PageSections
+        page="blog"
+        sections={{
+          hero: (
       <section className="relative pt-28 md:pt-36 pb-16 md:pb-20 text-white overflow-hidden">
         <PageHeroBackground />
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -57,6 +62,8 @@ const Blog = () => {
         </div>
       </section>
 
+          ),
+          posts: (
       <section className="py-16 md:py-20 bg-stride-bg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           {featuredPost && (
@@ -114,6 +121,9 @@ const Blog = () => {
           )}
         </div>
       </section>
+          ),
+        }}
+      />
     </PageLayout>
   );
 };

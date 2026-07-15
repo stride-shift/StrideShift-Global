@@ -137,6 +137,21 @@ drop policy if exists "site_content_admin_write" on public.site_content;
 create policy "site_content_admin_write" on public.site_content
   for all using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin));
 
+-- ---------- site_layout (visual editor: section order, visibility, styles) ----------
+create table if not exists public.site_layout (
+  id          text primary key,
+  data        jsonb not null default '{}'::jsonb,
+  updated_at  timestamptz not null default now()
+);
+alter table public.site_layout enable row level security;
+
+drop policy if exists "site_layout_public_read" on public.site_layout;
+create policy "site_layout_public_read" on public.site_layout
+  for select using (true);
+drop policy if exists "site_layout_admin_write" on public.site_layout;
+create policy "site_layout_admin_write" on public.site_layout
+  for all using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin));
+
 -- Tell PostgREST to reload its schema cache immediately.
 notify pgrst, 'reload schema';
 

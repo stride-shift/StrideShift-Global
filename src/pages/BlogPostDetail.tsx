@@ -9,7 +9,13 @@ import { useSiteContent } from '@/hooks/useSiteContent';
 const BlogPostDetail = () => {
   const { slug } = useParams();
   const { content } = useSiteContent();
-  const post = slug ? content.posts.find((p) => p.slug === slug) : undefined;
+  // Normalise both sides — URLs arrive percent-encoded and stored slugs can
+  // carry stray whitespace/case from admin edits, which made links open the
+  // wrong post (the 404 fallback or a first-match collision).
+  const wanted = slug ? decodeURIComponent(slug).trim().toLowerCase() : '';
+  const post = wanted
+    ? content.posts.find((p) => p.slug.trim().toLowerCase() === wanted)
+    : undefined;
 
   if (!post) {
     return (
@@ -30,7 +36,13 @@ const BlogPostDetail = () => {
     );
   }
 
-  const next = content.posts.find((p) => p.slug !== post.slug);
+  // "Next idea" = the post after this one in newest-first order (wrapping),
+  // not just the first non-current post.
+  const sorted = [...content.posts].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+  const idx = sorted.findIndex((p) => p.slug === post.slug);
+  const next = sorted.length > 1 ? sorted[(idx + 1) % sorted.length] : undefined;
 
   return (
     <PageLayout>

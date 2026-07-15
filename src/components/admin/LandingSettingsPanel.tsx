@@ -329,17 +329,29 @@ const PreviewCanvas = ({ draft }: { draft: SiteSettings }) => {
           draft.heroAlign === 'center' ? 'items-center text-center' : 'items-start text-left'
         }`}
       >
-        {/* Live Fluid hero renders ONLY the heroSubhead (or heroHeadline as
-            fallback) as a single statement — mirror that here so the preview
-            matches what visitors actually see on the homepage. */}
+        {/* The Fluid hero renders headline + rotating word, subhead beneath —
+            mirror that here so the preview matches the homepage. */}
         <h4
-          className={`font-display leading-snug mb-3 line-clamp-4 ${headlineSize} ${
+          className={`font-display leading-snug mb-2 line-clamp-3 ${headlineSize} ${
             draft.heroAlign === 'left' ? '' : 'max-w-md'
           }`}
-          style={{ color: draft.heroHeadlineColor || draft.heroSubheadColor || undefined }}
+          style={{ color: draft.heroHeadlineColor || undefined }}
         >
-          {draft.heroSubhead || draft.heroHeadline || 'Headline preview'}
+          {draft.heroHeadline || 'Headline preview'}
+          {draft.heroRotatingWords.trim() && (
+            <span className="block text-stride-gold">
+              {draft.heroRotatingWords.split(',')[0]?.trim()}
+            </span>
+          )}
         </h4>
+        {draft.heroSubhead && (
+          <p
+            className="text-xs text-white/75 mb-3 line-clamp-2 max-w-sm"
+            style={{ color: draft.heroSubheadColor || undefined }}
+          >
+            {draft.heroSubhead}
+          </p>
+        )}
 
         <div className={`flex gap-2 ${draft.heroAlign === 'center' ? 'justify-center' : ''}`}>
           <span
@@ -467,6 +479,13 @@ const LandingSettingsPanel = () => {
               value={draft.heroHeadline}
               onChange={(v) => setDraft({ ...draft, heroHeadline: v })}
               multiline
+            />
+
+            <TextField
+              label="Rotating words (comma-separated — the scrolling word after the headline; leave empty for a static headline)"
+              value={draft.heroRotatingWords}
+              onChange={(v) => setDraft({ ...draft, heroRotatingWords: v })}
+              placeholder="results, decisions, strategy, performance"
             />
 
             <TextField

@@ -28,9 +28,8 @@ const PrivacyPolicy = () => {
               1. Who we are
             </h2>
             <p className="leading-relaxed">
-              StrideShift Global ("we", "us", "our") is an AI-powered think tank for leadership
-              teams. This policy explains what data we collect, how we use it, and the choices you
-              have.
+              StrideShift Global ("we", "us", "our") is an AI-powered think tank for teams. This
+              policy explains what data we collect, how we use it, and the choices you have.
             </p>
 
             <h2 className="font-display text-2xl text-stride-text-strong mt-8 mb-3 tracking-tight">
@@ -55,8 +54,8 @@ const PrivacyPolicy = () => {
             </h2>
             <p className="leading-relaxed">
               You can ask us what we hold on you, correct it, or delete it. Email{' '}
-              <a href="mailto:hello@strideshift.ai" className="text-stride-accent underline">
-                hello@strideshift.ai
+              <a href="mailto:hq@strideshift.ai" className="text-stride-accent underline">
+                hq@strideshift.ai
               </a>{' '}
               and we'll respond within 30 days.
             </p>
@@ -66,8 +65,8 @@ const PrivacyPolicy = () => {
             </h2>
             <p className="leading-relaxed">
               Questions about this policy? Reach us at{' '}
-              <a href="mailto:hello@strideshift.ai" className="text-stride-accent underline">
-                hello@strideshift.ai
+              <a href="mailto:hq@strideshift.ai" className="text-stride-accent underline">
+                hq@strideshift.ai
               </a>
               .
             </p>

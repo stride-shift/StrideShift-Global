@@ -125,7 +125,7 @@ const HeroClassic = () => {
             variants={itemVariants}
             className="mt-12 flex flex-wrap items-center gap-x-7 gap-y-2 text-white/55 text-xs"
           >
-            {['60+ clients', '16 African countries', '9 AI products shipped'].map((t) => (
+            {['30+ clients', '16 countries, 3 continents', '23 AI products shipped'].map((t) => (
               <span key={t} className="flex items-center gap-1.5">
                 <span className="w-1 h-1 rounded-full bg-stride-accent-soft" />
                 {t}

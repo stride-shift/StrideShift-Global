@@ -4,6 +4,9 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import FloatingContactButton from '@/components/FloatingContactButton';
 import ScrollProgress from '@/components/ScrollProgress';
+import BackToTop from '@/components/BackToTop';
+import EditorToolbar, { DesignFab } from '@/components/editor/EditorToolbar';
+import { scrollToTop } from '@/components/motion/SmoothScroll';
 
 type PageLayoutProps = {
   children: React.ReactNode;
@@ -14,9 +17,10 @@ type PageLayoutProps = {
 const PageLayout = ({ children, showContact = true }: PageLayoutProps) => {
   const location = useLocation();
 
-  // Effect to scroll to top when route changes
+  // Jump to top when the route changes — routed through Lenis when active,
+  // because a plain window.scrollTo gets overridden by its animation loop.
   useEffect(() => {
-    window.scrollTo(0, 0);
+    scrollToTop(true);
   }, [location]);
 
   return (
@@ -25,7 +29,10 @@ const PageLayout = ({ children, showContact = true }: PageLayoutProps) => {
       <Navbar />
       {children}
       <Footer />
+      <BackToTop />
       {showContact && <FloatingContactButton />}
+      <DesignFab />
+      <EditorToolbar />
     </div>
   );
 };

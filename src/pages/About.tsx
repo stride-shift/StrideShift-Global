@@ -7,6 +7,7 @@ import { RevealOnScrollRoot } from '@/hooks/useScrollReveal';
 import { useSiteContent } from '@/hooks/useSiteContent';
 import PageHeroBackground from '@/components/PageHeroBackground';
 import SectionEyebrow from '@/components/SectionEyebrow';
+import PageSections from '@/components/editor/PageSections';
 
 const container = {
   hidden: { opacity: 0 },
@@ -41,7 +42,10 @@ const About = () => {
       />
       <RevealOnScrollRoot />
 
-      {/* Hero */}
+      <PageSections
+        page="about"
+        sections={{
+          hero: (
       <section className="relative pt-28 md:pt-36 pb-16 md:pb-24 text-white overflow-hidden">
         <PageHeroBackground />
         <div className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -80,7 +84,8 @@ const About = () => {
         </div>
       </section>
 
-      {/* Story */}
+          ),
+          story: (
       <section className="py-16 md:py-24 bg-stride-bg-elev">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
@@ -123,7 +128,8 @@ const About = () => {
         </div>
       </section>
 
-      {/* Comparison */}
+          ),
+          comparison: (
       <section className="py-16 md:py-24 bg-stride-bg">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
@@ -163,7 +169,8 @@ const About = () => {
         </div>
       </section>
 
-      {/* Credentials */}
+          ),
+          credentials: (
       <section className="py-16 md:py-24 bg-stride-bg-elev">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
@@ -200,7 +207,8 @@ const About = () => {
         </div>
       </section>
 
-      {/* CTA — warm gradient panel instead of flat navy */}
+          ),
+          cta: (
       <section className="relative py-16 md:py-24 overflow-hidden text-white text-center">
         <div className="absolute inset-0 bg-gradient-to-br from-stride-ink via-stride-sky/40 to-stride-sage/35" />
         <div className="absolute inset-0 bg-stride-ink/55" />
@@ -229,6 +237,9 @@ const About = () => {
           </Link>
         </div>
       </section>
+          ),
+        }}
+      />
     </PageLayout>
   );
 };
