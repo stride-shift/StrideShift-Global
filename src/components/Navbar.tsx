@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Menu, X, Shield, LogIn } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import {
   NavigationMenu,
@@ -18,15 +18,23 @@ import { useTheme } from '@/hooks/useTheme';
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
   const location = useLocation();
   const { user, isAdmin } = useAuth();
   const { theme } = useTheme();
 
-  useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 10);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  // Tuck the nav away while scrolling down past the fold; bring it back on
+  // any upward scroll. Feels like more screen without losing navigation.
+  const { scrollY } = useScroll();
+  useMotionValueEvent(scrollY, 'change', (y) => {
+    const prev = scrollY.getPrevious() ?? y;
+    setIsScrolled(y > 10);
+    if (y > 320 && y - prev > 2) setIsHidden(true);
+    else if (y - prev < -2 || y <= 320) setIsHidden(false);
+  });
+
+  // Never hide while the mobile menu is open.
+  const navHidden = isHidden && !isMenuOpen;
 
   // Always treat nav as "scrolled" so it has a visible backdrop on every page.
   // Without this, the nav is transparent at the top of long pages and looks
@@ -56,7 +64,8 @@ const Navbar = () => {
           : 'bg-transparent'
       )}
       initial={{ opacity: 1, y: 0 }}
-      animate={{ opacity: 1, y: 0 }}
+      animate={{ y: navHidden ? -88 : 0 }}
+      transition={{ duration: 0.4, ease: [0.2, 0.8, 0.2, 1] }}
     >
       <div className="w-full px-4 sm:px-6 lg:px-8 mx-auto max-w-7xl">
         <div className="flex items-center justify-between h-16">
@@ -70,62 +79,30 @@ const Navbar = () => {
           <div className="hidden md:flex items-center gap-2">
             <NavigationMenu>
               <NavigationMenuList>
-                <NavigationMenuItem>
-                  <Link to="/">
-                    <NavigationMenuLink className={linkClass(location.pathname === '/')}>
-                      Home
+                {/* asChild merges the Radix link into the router Link — a plain
+                    <Link> inside NavigationMenuLink renders nested <a> tags. */}
+                {[
+                  { to: '/', label: 'Home', active: location.pathname === '/' },
+                  { to: '/about', label: 'About', active: location.pathname === '/about' },
+                  { to: '/solutions', label: 'Solutions', active: location.pathname.startsWith('/solutions') },
+                  { to: '/team', label: 'Team', active: location.pathname === '/team' },
+                  { to: '/blog', label: 'Ideas', active: location.pathname.startsWith('/blog') },
+                  { to: '/contact', label: 'Contact', active: location.pathname === '/contact' },
+                ].map((item) => (
+                  <NavigationMenuItem key={item.to}>
+                    <NavigationMenuLink asChild>
+                      <Link to={item.to} className={linkClass(item.active)}>
+                        {item.label}
+                      </Link>
                     </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-
-                <NavigationMenuItem>
-                  <Link to="/about">
-                    <NavigationMenuLink className={linkClass(location.pathname === '/about')}>
-                      About
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-
-                <NavigationMenuItem>
-                  <Link to="/solutions">
-                    <NavigationMenuLink className={linkClass(location.pathname.startsWith('/solutions'))}>
-                      Solutions
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-
-                <NavigationMenuItem>
-                  <Link to="/team">
-                    <NavigationMenuLink className={linkClass(location.pathname === '/team')}>
-                      Team
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-
-                <NavigationMenuItem>
-                  <Link to="/blog">
-                    <NavigationMenuLink
-                      className={linkClass(location.pathname.startsWith('/blog'))}
-                    >
-                      Ideas
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-
-                <NavigationMenuItem>
-                  <Link to="/contact">
-                    <NavigationMenuLink
-                      className={linkClass(location.pathname === '/contact')}
-                    >
-                      Contact
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
+                  </NavigationMenuItem>
+                ))}
 
                 {isAdmin && (
                   <NavigationMenuItem>
-                    <Link to="/admin">
-                      <NavigationMenuLink
+                    <NavigationMenuLink asChild>
+                      <Link
+                        to="/admin"
                         className={cn(
                           linkClass(location.pathname.startsWith('/admin')),
                           'gap-1.5'
@@ -133,8 +110,8 @@ const Navbar = () => {
                       >
                         <Shield className="w-3.5 h-3.5" />
                         Admin
-                      </NavigationMenuLink>
-                    </Link>
+                      </Link>
+                    </NavigationMenuLink>
                   </NavigationMenuItem>
                 )}
               </NavigationMenuList>

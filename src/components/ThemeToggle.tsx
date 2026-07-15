@@ -1,3 +1,5 @@
+import { useRef } from 'react';
+import { flushSync } from 'react-dom';
 import { Moon, Sun } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '@/hooks/useTheme';
@@ -11,7 +13,30 @@ interface ThemeToggleProps {
 
 const ThemeToggle = ({ className, variant = 'navbar', scrolled = true }: ThemeToggleProps) => {
   const { theme, toggleTheme } = useTheme();
+  const btnRef = useRef<HTMLButtonElement>(null);
   const isDark = theme === 'dark';
+
+  const handleToggle = () => {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const startVT = (document as Document & {
+      startViewTransition?: (cb: () => void) => { finished: Promise<void> };
+    }).startViewTransition?.bind(document);
+
+    if (!startVT || reduced) {
+      toggleTheme();
+      return;
+    }
+
+    // Circular reveal sweeping out from the toggle button. flushSync forces
+    // React to commit the theme class change inside the transition snapshot.
+    const r = btnRef.current?.getBoundingClientRect();
+    const root = document.documentElement;
+    root.style.setProperty('--theme-x', `${r ? r.left + r.width / 2 : window.innerWidth - 40}px`);
+    root.style.setProperty('--theme-y', `${r ? r.top + r.height / 2 : 40}px`);
+    root.setAttribute('data-theme-switching', '');
+    const vt = startVT(() => flushSync(() => toggleTheme()));
+    vt.finished.finally(() => root.removeAttribute('data-theme-switching'));
+  };
 
   const baseClasses =
     variant === 'navbar'
@@ -25,7 +50,8 @@ const ThemeToggle = ({ className, variant = 'navbar', scrolled = true }: ThemeTo
 
   return (
     <button
-      onClick={toggleTheme}
+      ref={btnRef}
+      onClick={handleToggle}
       className={cn(baseClasses, className)}
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
     >

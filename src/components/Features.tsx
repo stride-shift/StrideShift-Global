@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useScrollHijack } from '@/hooks/useScrollHijack';
-import { capabilities, problem } from '@/data/stride';
+import { capabilities } from '@/data/stride';
 import { useSiteContent } from '@/hooks/useSiteContent';
 import SectionEyebrow from '@/components/SectionEyebrow';
 import NeuralBackground from '@/components/ui/neural-background';
@@ -233,54 +233,11 @@ const Features = () => {
           <Link
             to="/about"
             onClick={() => window.scrollTo(0, 0)}
-            className="inline-flex items-center px-6 py-3 bg-stride-bg-elev text-stride-ink rounded-full border border-stride-border hover:bg-stride-sage-tint hover:border-stride-sage/40 transition-all group w-full sm:w-auto justify-center font-medium"
+            className="inline-flex items-center px-6 py-3 bg-stride-bg-elev text-stride-text-strong rounded-full border border-stride-border hover:bg-stride-sage-tint hover:border-stride-sage/40 transition-all group w-full sm:w-auto justify-center font-medium"
           >
             Learn how we work
             <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Link>
-        </div>
-      </section>
-
-      {/* Open-ended problem section */}
-      <section className="bg-stride-bg py-14 md:py-20">
-        <div className="w-full px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
-          <div className="text-center mb-12 reveal-on-scroll">
-            <SectionEyebrow>What we focus on</SectionEyebrow>
-            <h2 className="mt-3 font-display text-3xl sm:text-4xl lg:text-5xl text-stride-text-strong mb-6 tracking-tight max-w-3xl mx-auto">
-              {problem.headline}
-            </h2>
-          </div>
-
-          <div className="reveal-on-scroll scale-up delay-1 glow-card bg-stride-bg-elev rounded-2xl shadow-lg border border-stride-border p-8 md:p-12 transition-all duration-300">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-10">
-              <div className="space-y-4">
-                {problem.body.map((para, i) => (
-                  <p
-                    key={i}
-                    className="text-stride-text-muted text-base sm:text-lg leading-relaxed"
-                  >
-                    {para}
-                  </p>
-                ))}
-              </div>
-              <div className="card-tint-sky rounded-xl p-6 md:p-8">
-                <h3 className="font-display text-xl sm:text-2xl text-stride-text-strong mb-4">
-                  {problem.definitionTitle}
-                </h3>
-                <ul className="space-y-3">
-                  {problem.definitionList.map((d) => (
-                    <li key={d.strong} className="flex gap-3 text-sm sm:text-base">
-                      <ArrowRight className="w-4 h-4 text-stride-sky mt-1 flex-shrink-0" />
-                      <span className="text-stride-text-muted">
-                        <strong className="text-stride-text-strong">{d.strong}</strong>
-                        {d.text}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
     </>
