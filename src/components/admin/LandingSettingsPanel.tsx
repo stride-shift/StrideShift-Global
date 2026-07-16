@@ -137,29 +137,35 @@ const ColorField = ({
 
 /* ────────────────────────────── template swatch (left column gallery) */
 
-const TEMPLATE_SWATCH: Record<string, string> = {
-  fluid: 'from-stride-ink via-stride-sky/60 to-stride-sage/60',
-  classic: 'from-stride-ink via-stride-ink-deep to-stride-sage/40',
-  aurora: 'from-stride-ink via-stride-sage to-stride-sky',
-  lines: 'from-stride-ink-deep via-stride-sky to-stride-sky/40',
-  spectrum: 'from-stride-sky/60 via-stride-ink to-stride-gold/40',
-  mesh: 'from-stride-ink via-stride-sky/60 to-stride-sage/50',
-  grid: 'from-stride-ink-deep via-stride-ink to-stride-sky/30',
-  spotlight: 'from-stride-ink-deep via-stride-sky/40 to-stride-ink-deep',
-  waves: 'from-stride-ink via-stride-sage/50 to-stride-sky/40',
-  orbit: 'from-stride-ink via-stride-ink-deep to-stride-gold/30',
-  minimal: 'from-stride-ink via-stride-ink-deep to-stride-ink',
+/* Each tile gets a hand-drawn CSS approximation of what the template really
+   looks like on the homepage — so picking one isn't a guessing game. */
+const TEMPLATE_PREVIEW_BG: Record<string, string> = {
+  fluid:
+    'radial-gradient(55% 75% at 25% 35%, rgba(96,150,199,0.8), transparent 65%), radial-gradient(50% 70% at 78% 62%, rgba(124,166,124,0.65), transparent 65%), radial-gradient(38% 55% at 62% 18%, rgba(224,178,92,0.5), transparent 60%), #0d1626',
+  classic: '#0d1626',
+  aurora:
+    'radial-gradient(85% 110% at 50% -10%, rgba(72,201,176,0.6), transparent 60%), radial-gradient(60% 85% at 18% 45%, rgba(96,150,199,0.55), transparent 65%), radial-gradient(45% 65% at 82% 55%, rgba(140,110,220,0.35), transparent 65%), #0a1220',
+  lines: '#0a1220',
+  spectrum:
+    'linear-gradient(115deg, transparent 26%, rgba(255,70,70,0.85) 36%, rgba(255,200,60,0.85) 43%, rgba(90,220,130,0.85) 50%, rgba(70,160,255,0.9) 57%, rgba(170,95,255,0.85) 64%, transparent 74%), #05080f',
+  mesh:
+    'radial-gradient(42% 58% at 20% 28%, rgba(96,150,199,0.75), transparent 70%), radial-gradient(48% 62% at 82% 30%, rgba(124,166,124,0.6), transparent 70%), radial-gradient(52% 62% at 50% 88%, rgba(224,178,92,0.45), transparent 70%), #101a2b',
+  grid: '#0a1220',
+  spotlight:
+    'radial-gradient(48% 65% at 60% 42%, rgba(255,255,255,0.5), rgba(255,255,255,0.1) 55%, transparent 78%), #0a1220',
+  waves: '#0e1828',
+  orbit: '#0d1524',
+  minimal:
+    'radial-gradient(60% 80% at 72% 28%, rgba(96,150,199,0.35), transparent 70%), radial-gradient(52% 72% at 24% 78%, rgba(124,166,124,0.28), transparent 70%), #0c1422',
 };
 
 const TemplateTile = ({
   active,
-  swatchClass,
   name,
   templateId,
   onClick,
 }: {
   active: boolean;
-  swatchClass: string;
   name: string;
   templateId: string;
   onClick: () => void;
@@ -174,7 +180,8 @@ const TemplateTile = ({
     }`}
   >
     <div
-      className={`h-14 rounded-md bg-gradient-to-br ${swatchClass} mb-1.5 relative overflow-hidden`}
+      className="h-14 rounded-md mb-1.5 relative overflow-hidden"
+      style={{ background: TEMPLATE_PREVIEW_BG[templateId] || '#0d1626' }}
     >
       {/* Per-template subtle decoration */}
       {templateId === 'lines' && (
@@ -189,7 +196,7 @@ const TemplateTile = ({
       {templateId === 'classic' && (
         <div className="absolute right-2 top-2 bottom-2 w-8 rounded bg-white/25" />
       )}
-      {(templateId === 'grid' || templateId === 'spotlight') && (
+      {templateId === 'grid' && (
         <div
           className="absolute inset-0 opacity-40"
           style={{
@@ -203,10 +210,15 @@ const TemplateTile = ({
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-9 h-9 rounded-full border border-white/40" />
           <div className="absolute w-5 h-5 rounded-full border border-white/30" />
+          <div className="absolute w-1.5 h-1.5 rounded-full bg-stride-gold" />
         </div>
       )}
       {templateId === 'waves' && (
-        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-white/15 rounded-t-[100%]" />
+        <>
+          <div className="absolute inset-x-0 bottom-0 h-3/5 bg-stride-sky/25 rounded-t-[100%]" />
+          <div className="absolute -inset-x-4 bottom-0 h-2/5 bg-stride-sage/30 rounded-t-[100%]" />
+          <div className="absolute -inset-x-8 bottom-0 h-1/4 bg-white/15 rounded-t-[100%]" />
+        </>
       )}
       {active && (
         <span className="absolute top-1 right-1 w-5 h-5 rounded-full bg-stride-accent text-white flex items-center justify-center shadow-md">
@@ -446,7 +458,6 @@ const LandingSettingsPanel = () => {
                 key={tpl.id}
                 templateId={tpl.id}
                 name={tpl.name}
-                swatchClass={TEMPLATE_SWATCH[tpl.id]}
                 active={draft.heroTemplate === tpl.id}
                 onClick={() => setDraft({ ...draft, heroTemplate: tpl.id })}
               />
