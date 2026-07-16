@@ -17,13 +17,21 @@ drop policy if exists "media_public_read" on storage.objects;
 create policy "media_public_read" on storage.objects
   for select using (bucket_id = 'media');
 
+-- Writes are admin-only (2026-07-16 hardening): the bucket is publicly
+-- readable, so letting any authenticated member upload/overwrite was a gap.
 drop policy if exists "media_auth_insert" on storage.objects;
-create policy "media_auth_insert" on storage.objects
-  for insert with check (bucket_id = 'media' and auth.role() = 'authenticated');
+drop policy if exists "media_admin_insert" on storage.objects;
+create policy "media_admin_insert" on storage.objects
+  for insert with check (bucket_id = 'media' and public.is_admin());
 
 drop policy if exists "media_auth_update" on storage.objects;
-create policy "media_auth_update" on storage.objects
-  for update using (bucket_id = 'media' and auth.role() = 'authenticated');
+drop policy if exists "media_admin_update" on storage.objects;
+create policy "media_admin_update" on storage.objects
+  for update using (bucket_id = 'media' and public.is_admin());
+
+drop policy if exists "media_admin_delete" on storage.objects;
+create policy "media_admin_delete" on storage.objects
+  for delete using (bucket_id = 'media' and public.is_admin());
 
 -- ============================================================
 -- STEP 2 DONE. Image uploads in the admin dashboard now work.

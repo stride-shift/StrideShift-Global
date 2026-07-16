@@ -18,11 +18,16 @@ const shell = readFileSync(join(DIR, '_shell.html'), 'utf8');
 // (and sometimes `{{ .Email }}`, `{{ .Token }}`, etc). We keep those Go
 // template tokens intact so Supabase substitutes them at send time.
 const TEMPLATES = {
-  // type: { filename, title, headline, body, cta, note, preheader }
+  // type: { filename, title, headline, body, cta, note, preheader, ctaUrl? }
   recovery: {
     file: 'recovery.html',
     title: 'Password reset',
     headline: 'Set a new password',
+    // Deep-link straight to the set-password page with a one-time token the
+    // page verifies itself (verifyOtp). Unlike {{ .ConfirmationURL }}, this
+    // never falls back to the Site URL — so the user can't end up silently
+    // signed in on the homepage instead of the reset interface.
+    ctaUrl: '{{ .SiteURL }}/reset-password?token_hash={{ .TokenHash }}&type=recovery',
     body:
       "We received a request to reset the password on your StrideShift account. " +
       "Click the button below to choose a new one. If you didn't ask for this, " +
@@ -107,7 +112,7 @@ const sub = (tmpl, vars) =>
     .replaceAll('{{TITLE}}', vars.title)
     .replaceAll('{{HEADLINE}}', vars.headline)
     .replaceAll('{{BODY}}', vars.body)
-    .replaceAll('{{CTA_URL}}', '{{ .ConfirmationURL }}')
+    .replaceAll('{{CTA_URL}}', vars.ctaUrl ?? '{{ .ConfirmationURL }}')
     .replaceAll('{{CTA_LABEL}}', vars.cta)
     .replaceAll('{{NOTE}}', vars.note)
     .replaceAll('{{PREHEADER}}', vars.preheader);

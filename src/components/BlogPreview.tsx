@@ -27,7 +27,7 @@ const BlogPreview = () => {
           <Link to="/blog">
             <Button
               variant="outline"
-              className="group rounded-full border-stride-ink/30 text-stride-ink hover:bg-stride-ink hover:text-stride-cream hover:border-stride-ink transition-colors"
+              className="group rounded-full border-stride-text-strong/30 text-stride-text-strong hover:bg-stride-text-strong hover:text-stride-bg hover:border-stride-text-strong transition-colors bg-transparent"
               onClick={() => window.scrollTo(0, 0)}
             >
               All ideas

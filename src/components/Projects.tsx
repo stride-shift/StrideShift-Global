@@ -92,13 +92,13 @@ const Projects = () => {
                     {project.chips.slice(0, 3).map((chip) => (
                       <span
                         key={chip}
-                        className="px-2 py-0.5 bg-stride-accent/15 text-stride-accent rounded-full text-[10px] uppercase tracking-wider font-medium"
+                        className="px-2 py-0.5 bg-stride-accent/15 text-stride-accent dark:bg-white/[0.08] dark:text-white/75 rounded-full text-[10px] uppercase tracking-wider font-medium"
                       >
                         {chip}
                       </span>
                     ))}
                   </div>
-                  <span className="text-stride-accent font-semibold text-sm inline-flex items-center">
+                  <span className="text-stride-accent dark:text-stride-sky font-semibold text-sm inline-flex items-center">
                     See how it works
                     <ArrowRight className="ml-1.5 w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </span>

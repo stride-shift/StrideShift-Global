@@ -89,8 +89,9 @@ const Contact = () => {
       <section className="py-16 md:py-24 bg-stride-bg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
-            {/* Left — looping ambient video, no overlay text */}
-            <div className="relative rounded-2xl overflow-hidden bg-stride-ink min-h-[440px] lg:min-h-0">
+            {/* Left — looping ambient video, no overlay text. Border keeps the
+                panel visible while the (large) video file buffers. */}
+            <div className="relative rounded-2xl overflow-hidden bg-stride-ink-deep border border-stride-border min-h-[440px] lg:min-h-0">
               <video
                 src="/contact.mp4"
                 autoPlay
@@ -105,6 +106,25 @@ const Contact = () => {
             <div>
               <ContactForm />
             </div>
+          </div>
+
+          {/* Legal entity — board requirement: identify the company behind
+              StrideShift on the Contact page and footer. */}
+          <div className="mt-10 pt-8 border-t border-stride-border text-center">
+            <p className="text-sm text-stride-text-muted leading-relaxed">
+              StrideShift is a trading name of{' '}
+              <span className="text-stride-text-strong font-medium">
+                The Field Institute (Pty) Ltd
+              </span>{' '}
+              (Registration Number: 2017/313210/07)
+            </p>
+            <address className="not-italic text-sm text-stride-text-muted leading-relaxed mt-1">
+              7 Escombe Avenue, Parktown West, Johannesburg, South Africa
+              <br />
+              <a href="mailto:hq@strideshift.ai" className="text-stride-accent hover:underline">
+                hq@strideshift.ai
+              </a>
+            </address>
           </div>
         </div>
       </section>

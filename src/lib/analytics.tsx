@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { getSupabase } from '@/lib/supabase';
+import { hasAnalyticsConsent } from '@/lib/consent';
 
 /**
  * Lightweight first-party analytics. Logs pageviews + clicks to the Supabase
  * `analytics_events` table (columns: event 'view'|'click', path, target,
- * session_id). No-ops gracefully when Supabase isn't configured.
+ * session_id). No-ops gracefully when Supabase isn't configured, and only
+ * runs after the visitor accepts non-essential cookies (POPIA consent).
  */
 
 const SESSION_KEY = 'stride-analytics-session';
@@ -23,6 +25,7 @@ export function getSessionId(): string {
 export type EventKind = 'view' | 'click';
 
 export async function track(event: EventKind, path: string, target?: string) {
+  if (!hasAnalyticsConsent()) return;
   const supa = getSupabase();
   if (!supa) return;
   try {

@@ -23,7 +23,11 @@ create policy "profiles_insert_own" on public.profiles
   for insert with check (auth.uid() = id);
 drop policy if exists "profiles_update_own" on public.profiles;
 create policy "profiles_update_own" on public.profiles
-  for update using (auth.uid() = id);
+  for update using (auth.uid() = id)
+  with check (auth.uid() = id);
+-- NOTE: is_admin changes are additionally guarded by the
+-- trg_prevent_admin_escalation trigger — see
+-- migrations/20260716213000_security_hardening.sql (run it after this file).
 
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path = public as $$

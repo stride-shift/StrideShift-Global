@@ -6,17 +6,33 @@ import { site } from '@/data/stride';
 import Logo from '@/components/Logo';
 import { getSupabase } from '@/lib/supabase';
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const SUBSCRIBE_COOLDOWN_MS = 30_000;
+
 const Footer = () => {
   const [email, setEmail] = useState('');
+  const [honeypot, setHoneypot] = useState('');
+  const [lastSubmit, setLastSubmit] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) {
-      toast({ title: 'Email required', description: 'Please enter your email.', variant: 'destructive' });
+    // Bots fill every field — humans never see this one.
+    if (honeypot) return;
+    if (!EMAIL_RE.test(email.trim())) {
+      toast({
+        title: 'Check your email address',
+        description: 'That doesn’t look like a valid email.',
+        variant: 'destructive',
+      });
       return;
     }
+    if (Date.now() - lastSubmit < SUBSCRIBE_COOLDOWN_MS) {
+      toast({ title: 'One moment', description: 'Please wait before trying again.' });
+      return;
+    }
+    setLastSubmit(Date.now());
     setIsSubmitting(true);
     const supa = getSupabase();
     if (supa) {
@@ -57,6 +73,13 @@ const Footer = () => {
                 {site.email}
               </a>
             </p>
+            <address className="not-italic text-white/45 text-xs leading-relaxed mb-5">
+              StrideShift is a trading name of The Field Institute (Pty) Ltd
+              <br />
+              Registration Number: 2017/313210/07
+              <br />
+              7 Escombe Avenue, Parktown West, Johannesburg, South Africa
+            </address>
             <div className="flex space-x-3">
               <a
                 href="https://www.linkedin.com/"
@@ -98,6 +121,11 @@ const Footer = () => {
                   Contact
                 </Link>
               </li>
+              <li>
+                <Link to="/privacy-policy" className="text-white/70 hover:text-white transition-colors">
+                  Privacy Policy
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -107,6 +135,17 @@ const Footer = () => {
               Subscribe for the latest updates on StrideShift Global.
             </p>
             <form className="space-y-3" onSubmit={handleSubscribe}>
+              {/* Honeypot — hidden from humans, catnip for bots */}
+              <input
+                type="text"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                className="absolute -left-[9999px] w-px h-px opacity-0"
+                name="website"
+              />
               <input
                 type="email"
                 placeholder="you@company.com"
@@ -131,12 +170,15 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="pt-8 flex flex-col md:flex-row justify-between items-center gap-3">
+        {/* Extra bottom padding keeps this row clear of the fixed corner
+            buttons (back-to-top, "Let's talk") which sit over the page edge. */}
+        <div className="pt-8 pb-16 md:pb-14 flex flex-col md:flex-row justify-between items-center gap-3">
           <p className="text-white/50 text-xs">
-            © {new Date().getFullYear()} StrideShift Global. All rights reserved.
+            © {new Date().getFullYear()} The Field Institute (Pty) Ltd, trading as StrideShift. All
+            rights reserved.
           </p>
           <div className="flex space-x-6">
-            <Link to="/privacy-policy" className="text-xs text-white/50 hover:text-white transition-colors">
+            <Link to="/privacy-policy" className="text-xs text-white/70 hover:text-white transition-colors">
               Privacy Policy
             </Link>
           </div>

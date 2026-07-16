@@ -5,13 +5,14 @@ import { Link } from 'react-router-dom';
 import { hero } from '@/data/stride';
 import { useSiteSettings, type HeroTemplate } from '@/hooks/useSiteSettings';
 import { CssHeroBackground } from '@/components/hero/HeroBackgrounds';
+import RotatingWord from '@/components/motion/RotatingWord';
 
-// Sized for a paragraph-style statement (the heroSubhead now drives the hero).
+// Billboard sizes — the headline is a short statement with a rotating word.
 const HEADLINE_SIZE: Record<'sm' | 'md' | 'lg' | 'xl', string> = {
-  sm: 'text-lg sm:text-xl lg:text-2xl',
-  md: 'text-xl sm:text-2xl lg:text-3xl',
-  lg: 'text-2xl sm:text-3xl lg:text-4xl',
-  xl: 'text-3xl sm:text-4xl lg:text-5xl',
+  sm: 'text-3xl sm:text-4xl lg:text-5xl',
+  md: 'text-4xl sm:text-5xl lg:text-6xl',
+  lg: 'text-4xl sm:text-5xl lg:text-6xl',
+  xl: 'text-5xl sm:text-6xl lg:text-7xl',
 };
 
 // WebGL shaders pull in Three.js — load each only when its template is active.
@@ -82,14 +83,36 @@ const HeroShader = ({ template }: { template: Exclude<HeroTemplate, 'classic'> }
         animate="visible"
         variants={containerVariants}
       >
-        {/* Single statement — same heroSubhead drives every template. */}
+        {/* Headline + rotating word (admin-editable: Landing tab) — the same
+            copy drives every template; the think-tank line is the strapline. */}
         <motion.h1
           variants={itemVariants}
-          className={`font-display leading-snug tracking-tight ${HEADLINE_SIZE[settings.heroHeadlineSize]}`}
-          style={{ color: settings.heroHeadlineColor || settings.heroSubheadColor || undefined }}
+          className={`font-display leading-[1.08] tracking-tight text-white ${HEADLINE_SIZE[settings.heroHeadlineSize]}`}
+          style={{ color: settings.heroHeadlineColor || undefined }}
         >
-          {settings.heroSubhead || settings.heroHeadline}
+          {settings.heroHeadline}
+          {settings.heroRotatingWords.trim() && (
+            <span className="block mt-1">
+              {settings.heroRotatingPrefix && <>{settings.heroRotatingPrefix} </>}
+              <RotatingWord
+                words={settings.heroRotatingWords.split(',')}
+                className="text-stride-gold"
+              />
+            </span>
+          )}
         </motion.h1>
+
+        {settings.heroSubhead && (
+          <motion.p
+            variants={itemVariants}
+            className={`mt-7 text-base sm:text-lg text-white/80 leading-relaxed max-w-2xl ${
+              settings.heroAlign === 'center' ? 'mx-auto' : ''
+            }`}
+            style={{ color: settings.heroSubheadColor || undefined }}
+          >
+            {settings.heroSubhead}
+          </motion.p>
+        )}
 
         <motion.div
           variants={itemVariants}

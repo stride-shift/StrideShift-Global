@@ -111,6 +111,7 @@ const HeroFluid = () => {
               />
               {settings.heroRotatingWords.trim() && (
                 <span className="block mt-1">
+                  {settings.heroRotatingPrefix && <>{settings.heroRotatingPrefix} </>}
                   <RotatingWord
                     words={settings.heroRotatingWords.split(',')}
                     className="text-stride-gold"

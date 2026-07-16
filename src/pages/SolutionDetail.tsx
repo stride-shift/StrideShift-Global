@@ -11,6 +11,7 @@ import { ScrollTiltedGrid } from '@/components/ui/scroll-tilted-grid';
 import SectionEyebrow from '@/components/SectionEyebrow';
 import { useSiteContent } from '@/hooks/useSiteContent';
 import CtaPanel from '@/components/CtaPanel';
+import { sanitizeHtml } from '@/lib/sanitize';
 
 const container = {
   hidden: { opacity: 0 },
@@ -152,7 +153,7 @@ const SolutionDetail = () => {
             {solution.intro.title && (
               <h2
                 className="font-display text-3xl md:text-4xl lg:text-5xl text-stride-text-strong mb-5 tracking-tight"
-                dangerouslySetInnerHTML={{ __html: solution.intro.title }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(solution.intro.title) }}
               />
             )}
             {solution.intro.body && (
@@ -504,7 +505,7 @@ const SolutionDetail = () => {
             {solution.why.title && (
               <h2
                 className="font-display text-3xl md:text-4xl text-stride-text-strong mb-5 tracking-tight"
-                dangerouslySetInnerHTML={{ __html: solution.why.title }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(solution.why.title) }}
               />
             )}
             {solution.why.body && (
@@ -553,7 +554,7 @@ const SolutionDetail = () => {
             {solution.final.body && (
               <p
                 className="text-stride-text-muted text-lg leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: solution.final.body }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(solution.final.body) }}
               />
             )}
           </div>
@@ -579,7 +580,7 @@ const SolutionDetail = () => {
                   {rel.name}
                 </h3>
                 <p className="text-sm text-stride-text-muted line-clamp-2 mb-3">{rel.solution}</p>
-                <span className="text-stride-accent text-sm font-semibold inline-flex items-center group-hover:translate-x-0.5 transition-transform">
+                <span className="text-stride-accent dark:text-stride-sky text-sm font-semibold inline-flex items-center group-hover:translate-x-0.5 transition-transform">
                   See how it works
                   <ArrowRight className="ml-1.5 w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                 </span>

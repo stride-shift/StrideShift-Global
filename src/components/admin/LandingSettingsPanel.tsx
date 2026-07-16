@@ -339,8 +339,11 @@ const PreviewCanvas = ({ draft }: { draft: SiteSettings }) => {
         >
           {draft.heroHeadline || 'Headline preview'}
           {draft.heroRotatingWords.trim() && (
-            <span className="block text-stride-gold">
-              {draft.heroRotatingWords.split(',')[0]?.trim()}
+            <span className="block">
+              {draft.heroRotatingPrefix && <>{draft.heroRotatingPrefix} </>}
+              <span className="text-stride-gold">
+                {draft.heroRotatingWords.split(',')[0]?.trim()}
+              </span>
             </span>
           )}
         </h4>

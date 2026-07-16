@@ -84,7 +84,7 @@
 
   .dark {
     --background: 212 32% 6%;
-    --foreground: 40 22% 92%;
+    --foreground: 40 25% 97%;
 
     --card: 212 26% 10%;
     --card-foreground: 40 22% 92%;
@@ -109,26 +109,29 @@
 
     --border: 213 18% 18%;
     --input: 213 18% 20%;
-    --ring: 208 50% 60%;
+    --ring: 42 75% 60%;
 
     /* ----- Stride brand tokens (dark) ----- */
     --stride-navy: 212 36% 4%;
     --stride-navy-dark: 215 42% 3%;
     --stride-navy-light: 212 28% 14%;
 
-    --stride-accent: 208 50% 65%;
+    /* Dark mode leans on the gold spark for accents — links, active nav,
+       focus marks — instead of steel blue, so the theme feels warm not flat. */
+    --stride-accent: 42 75% 65%;
     /* accent-soft kept light: it's used as bright marks on always-dark navy
        surfaces (e.g. button text on the hero CTA). Must not darken. */
-    --stride-accent-soft: 208 50% 88%;
+    --stride-accent-soft: 42 70% 86%;
 
-    --stride-text-strong: 40 22% 92%;
-    --stride-text-muted: 213 14% 65%;
+    /* Near-white text for contrast against the navy surfaces */
+    --stride-text-strong: 40 25% 97%;
+    --stride-text-muted: 40 10% 74%;
 
     --stride-bg: 212 28% 12%;          /* lifted from 6% — was too dark */
     --stride-bg-elev: 212 24% 17%;     /* elevated cards read clearly against bg */
-    --stride-border: 213 18% 24%;
+    --stride-border: 42 10% 26%;       /* warm gold-tinted hairlines */
 
-    --stride-cream: 40 22% 92%;
+    --stride-cream: 40 25% 96%;
     --stride-cream-warm: 38 25% 88%;
     --stride-ink: 212 28% 12%;         /* match bg so heroes blend at top */
     --stride-ink-deep: 215 32% 8%;     /* lifted from 3% */
@@ -168,9 +171,9 @@
     transition: background-color 0.4s ease, color 0.4s ease;
   }
 
-  /* Selection chrome inherits brand accent */
+  /* Selection chrome inherits the gold brand spark */
   ::selection {
-    background: hsl(var(--stride-sky) / 0.25);
+    background: hsl(var(--stride-gold) / 0.4);
     color: hsl(var(--stride-text-strong));
   }
 

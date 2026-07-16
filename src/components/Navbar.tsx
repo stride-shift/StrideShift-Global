@@ -18,23 +18,15 @@ import { useTheme } from '@/hooks/useTheme';
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isHidden, setIsHidden] = useState(false);
   const location = useLocation();
   const { user, isAdmin } = useAuth();
   const { theme } = useTheme();
 
-  // Tuck the nav away while scrolling down past the fold; bring it back on
-  // any upward scroll. Feels like more screen without losing navigation.
+  // Sticky nav: always visible, only the backdrop state tracks scroll.
   const { scrollY } = useScroll();
   useMotionValueEvent(scrollY, 'change', (y) => {
-    const prev = scrollY.getPrevious() ?? y;
     setIsScrolled(y > 10);
-    if (y > 320 && y - prev > 2) setIsHidden(true);
-    else if (y - prev < -2 || y <= 320) setIsHidden(false);
   });
-
-  // Never hide while the mobile menu is open.
-  const navHidden = isHidden && !isMenuOpen;
 
   // Always treat nav as "scrolled" so it has a visible backdrop on every page.
   // Without this, the nav is transparent at the top of long pages and looks
@@ -64,8 +56,6 @@ const Navbar = () => {
           : 'bg-transparent'
       )}
       initial={{ opacity: 1, y: 0 }}
-      animate={{ y: navHidden ? -88 : 0 }}
-      transition={{ duration: 0.4, ease: [0.2, 0.8, 0.2, 1] }}
     >
       <div className="w-full px-4 sm:px-6 lg:px-8 mx-auto max-w-7xl">
         <div className="flex items-center justify-between h-16">

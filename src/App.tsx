@@ -2,9 +2,10 @@ import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { getSupabase } from '@/lib/supabase';
 import Index from './pages/Index';
 import NotFound from './pages/NotFound';
 import About from './pages/About';
@@ -20,6 +21,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Admin from './pages/Admin';
 import { AnalyticsTracker } from '@/lib/analytics';
+import CookieBanner from '@/components/CookieBanner';
 import { SmoothScroll } from '@/components/motion/SmoothScroll';
 import { EditModeProvider } from '@/hooks/useEditMode';
 
@@ -62,6 +64,27 @@ const AnimatedRoutes = () => {
   );
 };
 
+/**
+ * Safety net for password-reset links that land anywhere other than
+ * /reset-password (e.g. older emails whose redirect fell back to the site
+ * root): when Supabase fires PASSWORD_RECOVERY, take the user straight to
+ * the set-new-password interface instead of leaving them silently signed in.
+ */
+const RecoveryRedirect = () => {
+  const navigate = useNavigate();
+  useEffect(() => {
+    const supa = getSupabase();
+    if (!supa) return;
+    const { data: sub } = supa.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY' && window.location.pathname !== '/reset-password') {
+        navigate('/reset-password', { replace: true });
+      }
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [navigate]);
+  return null;
+};
+
 const App = () => {
   const [queryClient] = useState(() => new QueryClient());
 
@@ -73,6 +96,8 @@ const App = () => {
         <BrowserRouter>
           <SmoothScroll />
           <AnalyticsTracker />
+          <CookieBanner />
+          <RecoveryRedirect />
           <EditModeProvider>
             <AnimatedRoutes />
           </EditModeProvider>

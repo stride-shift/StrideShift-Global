@@ -1,8 +1,7 @@
 import { Suspense } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Award, Sparkles, Heart } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import PageLayout from '@/components/PageLayout';
+import CtaPanel from '@/components/CtaPanel';
 import SEO from '@/components/SEO';
 import { useSiteContent } from '@/hooks/useSiteContent';
 import { useTheme } from '@/hooks/useTheme';
@@ -29,25 +28,6 @@ const EXTRA_ALIGN: Record<'left' | 'center' | 'right', string> = {
   center: 'text-center',
   right: 'text-right',
 };
-
-/** Static "pillars" beside the mission line — three small qualities. */
-const PILLARS = [
-  {
-    icon: Award,
-    label: 'Expertise',
-    body: 'Deep domain knowledge across sectors and technologies.',
-  },
-  {
-    icon: Sparkles,
-    label: 'Experience',
-    body: 'Decades of building and scaling AI solutions.',
-  },
-  {
-    icon: Heart,
-    label: 'Impact',
-    body: 'Human-centred outcomes for businesses and communities.',
-  },
-];
 
 const Team = () => {
   const { content } = useSiteContent();
@@ -138,55 +118,6 @@ const Team = () => {
               </motion.div>
             )}
           </motion.div>
-
-          {/* ====== Pillars strip — mission card + 3 small cards ====== */}
-          <motion.div
-            initial={{ opacity: 0, y: 28 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.5 }}
-            className="mt-12 grid grid-cols-1 lg:grid-cols-[1.4fr_1fr_1fr_1fr] gap-3 sm:gap-4 text-left"
-          >
-            {/* Mission card — sage-tinted, slightly larger emphasis */}
-            <div
-              className={`relative rounded-2xl p-5 sm:p-6 backdrop-blur-xl border ${
-                isDark
-                  ? 'bg-stride-sage/12 border-stride-sage/25'
-                  : 'bg-stride-sage/15 border-stride-sage/30'
-              }`}
-            >
-              <div className="relative">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3 bg-stride-sage/25 ring-1 ring-stride-sage/40">
-                  <Sparkles className="w-4 h-4 text-stride-sage" />
-                </div>
-                <p className="font-display text-lg sm:text-xl text-white leading-snug tracking-tight">
-                  {team.mission}
-                </p>
-              </div>
-            </div>
-
-            {/* 3 pillar cards — glass over the mountains */}
-            {PILLARS.map((p) => {
-              const Icon = p.icon;
-              return (
-                <div
-                  key={p.label}
-                  className={`rounded-2xl p-5 sm:p-6 backdrop-blur-xl border transition-all hover:-translate-y-0.5 ${
-                    isDark
-                      ? 'bg-white/[0.03] border-white/10 hover:bg-white/[0.06]'
-                      : 'bg-white/[0.06] border-white/15 hover:bg-white/[0.10]'
-                  }`}
-                >
-                  <div className="w-8 h-8 rounded-lg bg-stride-gold/20 ring-1 ring-stride-gold/35 flex items-center justify-center mb-3">
-                    <Icon className="w-4 h-4 text-stride-gold" />
-                  </div>
-                  <p className="text-[11px] uppercase tracking-[0.22em] font-semibold text-stride-cream/80 mb-1">
-                    {p.label}
-                  </p>
-                  <p className="text-sm text-stride-cream/75 leading-relaxed">{p.body}</p>
-                </div>
-              );
-            })}
-          </motion.div>
         </div>
       </section>
 
@@ -225,23 +156,7 @@ const Team = () => {
       </section>
 
           ),
-          cta: (
-      <section className="py-16 md:py-24 bg-stride-navy text-white text-center">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl mb-4 tracking-tight">
-            {team.ctaTitle}
-          </h2>
-          <p className="text-white/85 mb-8 leading-relaxed">{team.ctaSub}</p>
-          <Link
-            to="/contact"
-            className="inline-flex items-center px-7 py-3 bg-white text-stride-navy rounded-lg hover:bg-stride-accent-soft transition-all group font-semibold"
-          >
-            Get in touch
-            <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </Link>
-        </div>
-      </section>
-          ),
+          cta: <CtaPanel title={team.ctaTitle} sub={team.ctaSub} buttonLabel="Get in touch" />,
         }}
       />
     </PageLayout>

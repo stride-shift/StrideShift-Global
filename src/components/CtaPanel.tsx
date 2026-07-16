@@ -1,5 +1,6 @@
 import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { sanitizeHtml } from '@/lib/sanitize';
 
 /**
  * Shared end-of-page call-to-action: a rounded gradient panel floating on the
@@ -23,41 +24,42 @@ const CtaPanel = ({
 }) => (
   <section className="bg-stride-bg py-14 md:py-20">
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="relative overflow-hidden rounded-3xl text-white text-center px-6 sm:px-10 py-14 md:py-20 shadow-2xl">
-        {/* Vivid brand gradient — sky into sage, anchored by ink */}
+      <div className="relative overflow-hidden rounded-3xl text-center px-6 sm:px-10 py-16 md:py-24 shadow-xl border border-stride-sky/25 dark:border-stride-gold/25">
+        {/* Day: off-white panel with blue accents. Night: deep ink with gold. */}
+        <div className="absolute inset-0 bg-stride-cream-warm dark:bg-stride-ink-deep" aria-hidden="true" />
+        {/* Single soft glow rising from the top edge */}
         <div
-          className="absolute inset-0 bg-gradient-to-br from-stride-ink via-stride-sky to-stride-sage"
+          className="absolute -top-40 left-1/2 -translate-x-1/2 w-[44rem] h-72 rounded-full bg-stride-sky/15 dark:bg-stride-gold/20 blur-3xl"
           aria-hidden="true"
         />
-        {/* Soft depth so white text stays readable over the lighter stops */}
+        {/* Hairline rule anchoring the top of the panel */}
         <div
-          className="absolute inset-0 bg-gradient-to-t from-stride-ink/50 via-stride-ink/10 to-stride-ink/30"
-          aria-hidden="true"
-        />
-        <div
-          className="absolute -top-24 -right-16 w-80 h-80 rounded-full bg-stride-gold/30 blur-3xl"
-          aria-hidden="true"
-        />
-        <div
-          className="absolute -bottom-28 -left-20 w-96 h-96 rounded-full bg-stride-sky-soft/25 blur-3xl"
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-px bg-gradient-to-r from-transparent via-stride-sky/60 dark:via-stride-gold/70 to-transparent"
           aria-hidden="true"
         />
 
         <div className="relative max-w-3xl mx-auto">
+          <span className="inline-block mb-5 text-[11px] uppercase tracking-[0.28em] font-semibold text-stride-sky dark:text-stride-gold">
+            Let&apos;s talk
+          </span>
           {titleHtml ? (
             <h2
-              className="font-display text-3xl md:text-4xl lg:text-5xl mb-4 tracking-tight"
-              dangerouslySetInnerHTML={{ __html: titleHtml }}
+              className="font-display text-3xl md:text-4xl lg:text-5xl mb-4 tracking-tight text-stride-ink dark:text-white"
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(titleHtml) }}
             />
           ) : (
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl mb-4 tracking-tight">
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl mb-4 tracking-tight text-stride-ink dark:text-white">
               {title}
             </h2>
           )}
-          {sub && <p className="text-white/90 mb-8 leading-relaxed">{sub}</p>}
+          {sub && (
+            <p className="text-stride-ink/70 dark:text-white/70 mb-9 leading-relaxed max-w-2xl mx-auto">
+              {sub}
+            </p>
+          )}
           <Link
             to={to}
-            className="inline-flex items-center px-7 py-3.5 bg-stride-cream text-stride-ink rounded-full hover:shadow-2xl hover:-translate-y-0.5 transition-all group font-semibold"
+            className="inline-flex items-center px-7 py-3.5 bg-stride-sky text-white dark:bg-stride-gold dark:text-stride-ink-deep rounded-full hover:shadow-[0_10px_40px_-10px_hsl(var(--stride-sky)/0.5)] dark:hover:shadow-[0_10px_40px_-10px_hsl(var(--stride-gold)/0.6)] hover:-translate-y-0.5 transition-all group font-semibold"
           >
             {buttonLabel}
             <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />

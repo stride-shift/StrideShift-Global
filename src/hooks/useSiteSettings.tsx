@@ -106,10 +106,13 @@ export interface SiteSettings {
   heroTemplate: HeroTemplate;
   heroImageUrl: string;
   heroHeadline: string;
-  /** Comma-separated words. When non-empty, the Fluid hero renders
-   *  `heroHeadline` with a rotating word carousel appended (Wix-style
-   *  scrolling word). Empty string = static headline only. */
+  /** Comma-separated words. When non-empty, the hero renders `heroHeadline`
+   *  with a rotating word carousel appended (Wix-style scrolling word).
+   *  Empty string = static headline only. */
   heroRotatingWords: string;
+  /** Static text rendered before the rotating word (e.g. "Smarter") so only
+   *  the word itself scrolls, not the whole line. */
+  heroRotatingPrefix: string;
   heroSubhead: string;
   heroAlign: HeroAlign;
   heroHeadlineSize: HeroHeadlineSize;
@@ -125,7 +128,7 @@ export interface SiteSettings {
 }
 
 /** Bump when default hero copy changes and must override stale saved rows. */
-export const COPY_VERSION = 5;
+export const COPY_VERSION = 7;
 
 export const DEFAULT_SETTINGS: SiteSettings = {
   copyV: COPY_VERSION,
@@ -134,10 +137,12 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1920&q=80',
   // Agreed in the 2026-06-30 team meeting: "We make you smarter so you can
   // perform better" is the headline; the think-tank sentence (without
-  // "leadership") is the strapline below it. Rotating words stay available
-  // as a feature but default off — the scrolling-word idea wasn't chosen.
+  // "leadership") is the strapline below it, and the Wix-style scrolling
+  // word flips through the market segments discussed in the meeting. The
+  // prefix stays static so only the final word rolls.
   heroHeadline: 'We make you smarter so you can perform better.',
-  heroRotatingWords: '',
+  heroRotatingWords: 'decisions,sales,marketing,strategy',
+  heroRotatingPrefix: 'Smarter',
   heroSubhead:
     'An AI-powered think tank for teams facing complex, open-ended challenges and making high-stakes decisions.',
   heroAlign: 'left',
@@ -162,7 +167,11 @@ export const DEFAULT_SETTINGS: SiteSettings = {
 // "leadership".
 // v5 — bumped for the agreed "We make you smarter so you can perform better"
 // headline with the think-tank sentence as strapline (team meeting 2026-06-30).
-const STORAGE_KEY = 'stride-site-settings-v5';
+// v6 — bumped to switch the rotating-word carousel ON by default (the
+// scrolling-word hero agreed in the meeting) so stale rows pick it up.
+// v7 — bumped to split the carousel into static prefix ("Smarter") + rolling
+// word, so only the word scrolls instead of the whole line swapping.
+const STORAGE_KEY = 'stride-site-settings-v7';
 const SETTINGS_ROW_ID = 1;
 
 interface SiteSettingsState {
@@ -221,6 +230,7 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
           if ((stored.copyV ?? 0) < COPY_VERSION) {
             merged.heroHeadline = DEFAULT_SETTINGS.heroHeadline;
             merged.heroRotatingWords = DEFAULT_SETTINGS.heroRotatingWords;
+            merged.heroRotatingPrefix = DEFAULT_SETTINGS.heroRotatingPrefix;
             merged.heroSubhead = DEFAULT_SETTINGS.heroSubhead;
             merged.copyV = COPY_VERSION;
           }
