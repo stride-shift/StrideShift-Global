@@ -74,15 +74,56 @@ export interface SectionOverride {
   pad?: SectionPad;
 }
 
+/* ---------- custom blocks (admin-inserted content, Wix-style) ---------- */
+
+export type BlockType = 'text' | 'image' | 'video' | 'quote';
+export type BlockAnim = 'none' | 'fade' | 'slide-left' | 'slide-right' | 'zoom';
+
+/** An admin-added content block. Lives in the page's `order` alongside the
+ *  built-in sections, so it drags/hides/styles with the same chrome. */
+export interface CustomBlock {
+  id: string; // "blk-…"
+  type: BlockType;
+  /* text */
+  heading?: string;
+  body?: string;
+  font?: 'serif' | 'sans';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  align?: 'left' | 'center' | 'right';
+  /* image */
+  imageUrl?: string;
+  caption?: string;
+  /* video (YouTube / Vimeo URL, or a direct .mp4) */
+  videoUrl?: string;
+  /* quote */
+  quote?: string;
+  attribution?: string;
+  /* shared */
+  anim?: BlockAnim;
+}
+
+export const BLOCK_LABELS: Record<BlockType, string> = {
+  text: 'Text block',
+  image: 'Image block',
+  video: 'Video block',
+  quote: 'Quote block',
+};
+
+export function newBlockId(): string {
+  return `blk-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
 export interface PageLayoutState {
-  /** Section ids in display order. Empty = registry default order. */
+  /** Section + block ids in display order. Empty = registry default order. */
   order: string[];
   overrides: Record<string, SectionOverride>;
+  /** Admin-inserted blocks, keyed by block id. */
+  blocks?: Record<string, CustomBlock>;
 }
 
 export type SiteLayout = Partial<Record<PageId, PageLayoutState>>;
 
-export const EMPTY_PAGE_LAYOUT: PageLayoutState = { order: [], overrides: {} };
+export const EMPTY_PAGE_LAYOUT: PageLayoutState = { order: [], overrides: {}, blocks: {} };
 
 export function pageIdFromPath(pathname: string): PageId | null {
   const clean = pathname.replace(/\/+$/, '') || '/';
@@ -97,13 +138,22 @@ export function pageIdFromPath(pathname: string): PageId | null {
  * known ids, drop unknown ids, and slot never-seen registry sections back in
  * at their default position (so new site sections appear automatically).
  */
-export function resolveOrder(page: PageId, stored: string[] | undefined): string[] {
+export function resolveOrder(
+  page: PageId,
+  stored: string[] | undefined,
+  /** Ids of custom blocks on this page — kept in place instead of dropped. */
+  blockIds: string[] = []
+): string[] {
   const defs = PAGE_SECTIONS[page].map((s) => s.id);
-  if (!stored || stored.length === 0) return defs;
-  const known = stored.filter((id) => defs.includes(id));
+  if (!stored || stored.length === 0) return [...defs, ...blockIds];
+  const known = stored.filter((id) => defs.includes(id) || blockIds.includes(id));
   const result = [...known];
   defs.forEach((id, defIdx) => {
     if (!result.includes(id)) result.splice(Math.min(defIdx, result.length), 0, id);
+  });
+  // Blocks that somehow fell out of the stored order come back at the end.
+  blockIds.forEach((id) => {
+    if (!result.includes(id)) result.push(id);
   });
   return result;
 }

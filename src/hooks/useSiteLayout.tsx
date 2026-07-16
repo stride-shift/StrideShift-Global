@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { getSupabase } from '@/lib/supabase';
 import {
+  CustomBlock,
   PageId,
   PageLayoutState,
   SectionOverride,
@@ -33,6 +34,9 @@ interface SiteLayoutState {
   getPage: (page: PageId) => PageLayoutState;
   setOrder: (page: PageId, order: string[]) => void;
   updateSection: (page: PageId, sectionId: string, patch: Partial<SectionOverride>) => void;
+  addBlock: (page: PageId, block: CustomBlock, afterId?: string) => void;
+  updateBlock: (page: PageId, blockId: string, patch: Partial<CustomBlock>) => void;
+  removeBlock: (page: PageId, blockId: string) => void;
   resetPage: (page: PageId) => void;
 }
 
@@ -44,6 +48,7 @@ function sanitise(stored: unknown): SiteLayout {
   for (const [page, value] of Object.entries(stored as Record<string, unknown>)) {
     if (!value || typeof value !== 'object') continue;
     const v = value as { order?: unknown; overrides?: unknown };
+    const vb = value as { order?: unknown; overrides?: unknown; blocks?: unknown };
     out[page as PageId] = {
       order: Array.isArray(v.order)
         ? v.order.filter((x): x is string => typeof x === 'string')
@@ -51,6 +56,10 @@ function sanitise(stored: unknown): SiteLayout {
       overrides:
         v.overrides && typeof v.overrides === 'object'
           ? (v.overrides as PageLayoutState['overrides'])
+          : {},
+      blocks:
+        vb.blocks && typeof vb.blocks === 'object'
+          ? (vb.blocks as PageLayoutState['blocks'])
           : {},
     };
   }
@@ -171,6 +180,64 @@ export function SiteLayoutProvider({ children }: { children: ReactNode }) {
     [apply]
   );
 
+  const addBlock = useCallback(
+    (page: PageId, block: CustomBlock, afterId?: string) =>
+      apply((prev) => {
+        const current = prev[page] ?? EMPTY_PAGE_LAYOUT;
+        const order = [...current.order];
+        const at = afterId ? order.indexOf(afterId) : -1;
+        if (at >= 0) order.splice(at + 1, 0, block.id);
+        else order.push(block.id);
+        return {
+          ...prev,
+          [page]: {
+            ...current,
+            order,
+            blocks: { ...(current.blocks ?? {}), [block.id]: block },
+          },
+        };
+      }),
+    [apply]
+  );
+
+  const updateBlock = useCallback(
+    (page: PageId, blockId: string, patch: Partial<CustomBlock>) =>
+      apply((prev) => {
+        const current = prev[page] ?? EMPTY_PAGE_LAYOUT;
+        const existing = current.blocks?.[blockId];
+        if (!existing) return prev;
+        return {
+          ...prev,
+          [page]: {
+            ...current,
+            blocks: { ...(current.blocks ?? {}), [blockId]: { ...existing, ...patch } },
+          },
+        };
+      }),
+    [apply]
+  );
+
+  const removeBlock = useCallback(
+    (page: PageId, blockId: string) =>
+      apply((prev) => {
+        const current = prev[page] ?? EMPTY_PAGE_LAYOUT;
+        const blocks = { ...(current.blocks ?? {}) };
+        delete blocks[blockId];
+        const overrides = { ...current.overrides };
+        delete overrides[blockId];
+        return {
+          ...prev,
+          [page]: {
+            ...current,
+            order: current.order.filter((id) => id !== blockId),
+            overrides,
+            blocks,
+          },
+        };
+      }),
+    [apply]
+  );
+
   const resetPage = useCallback(
     (page: PageId) =>
       apply((prev) => {
@@ -183,7 +250,18 @@ export function SiteLayoutProvider({ children }: { children: ReactNode }) {
 
   return (
     <SiteLayoutContext.Provider
-      value={{ layout, loading, saving, getPage, setOrder, updateSection, resetPage }}
+      value={{
+        layout,
+        loading,
+        saving,
+        getPage,
+        setOrder,
+        updateSection,
+        addBlock,
+        updateBlock,
+        removeBlock,
+        resetPage,
+      }}
     >
       {children}
     </SiteLayoutContext.Provider>

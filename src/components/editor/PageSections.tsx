@@ -8,17 +8,29 @@ import {
   ChevronUp,
   ChevronDown,
   X,
+  Pencil,
+  Plus,
+  Type,
+  Image as ImageIcon,
+  Film,
+  Quote as QuoteIcon,
 } from 'lucide-react';
 import {
+  BLOCK_LABELS,
+  BlockType,
+  CustomBlock,
   PAGE_SECTIONS,
   PageId,
   SectionOverride,
   SectionPad,
+  newBlockId,
   resolveOrder,
   hexToHslTriplet,
 } from '@/lib/sections';
 import { useSiteLayout } from '@/hooks/useSiteLayout';
 import { useEditMode } from '@/hooks/useEditMode';
+import CustomBlockView from '@/components/editor/CustomBlockView';
+import BlockEditPopover from '@/components/editor/BlockEditPopover';
 
 /**
  * Renders a page's sections in the admin-arranged order, applying visibility
@@ -174,6 +186,7 @@ const EditableSection = ({
   page,
   override,
   onMove,
+  block,
   children,
 }: {
   id: string;
@@ -181,11 +194,14 @@ const EditableSection = ({
   page: PageId;
   override: SectionOverride;
   onMove: (dir: -1 | 1) => void;
+  /** Present when this entry is an admin-inserted block — adds edit/delete. */
+  block?: CustomBlock;
   children: ReactNode;
 }) => {
   const controls = useDragControls();
-  const { updateSection } = useSiteLayout();
+  const { updateSection, updateBlock, removeBlock } = useSiteLayout();
   const [styleOpen, setStyleOpen] = useState(false);
+  const [blockOpen, setBlockOpen] = useState(false);
   const hidden = !!override.hidden;
 
   const btn =
@@ -225,12 +241,27 @@ const EditableSection = ({
           {hidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
         </button>
         <button
-          onClick={() => setStyleOpen((v) => !v)}
+          onClick={() => {
+            setStyleOpen((v) => !v);
+            setBlockOpen(false);
+          }}
           className={`${btn} ${styleOpen ? 'ring-2 ring-stride-accent' : ''}`}
           title="Section style"
         >
           <Palette className="w-4 h-4" />
         </button>
+        {block && (
+          <button
+            onClick={() => {
+              setBlockOpen((v) => !v);
+              setStyleOpen(false);
+            }}
+            className={`${btn} ${blockOpen ? 'ring-2 ring-stride-accent' : ''}`}
+            title="Edit block content"
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {styleOpen && (
@@ -238,6 +269,19 @@ const EditableSection = ({
           override={override}
           onChange={(patch) => updateSection(page, id, patch)}
           onClose={() => setStyleOpen(false)}
+        />
+      )}
+
+      {blockOpen && block && (
+        <BlockEditPopover
+          block={block}
+          onChange={(patch) => updateBlock(page, block.id, patch)}
+          onDelete={() => {
+            if (window.confirm('Delete this block? This cannot be undone.')) {
+              removeBlock(page, block.id);
+            }
+          }}
+          onClose={() => setBlockOpen(false)}
         />
       )}
 
@@ -260,6 +304,20 @@ const EditableSection = ({
 
 /* ─────────────────────────── main renderer ─────────────────────────── */
 
+const ADD_BLOCK_OPTIONS: { type: BlockType; label: string; icon: typeof Type }[] = [
+  { type: 'text', label: 'Text', icon: Type },
+  { type: 'image', label: 'Image', icon: ImageIcon },
+  { type: 'video', label: 'Video', icon: Film },
+  { type: 'quote', label: 'Quote', icon: QuoteIcon },
+];
+
+const BLOCK_DEFAULTS: Record<BlockType, Partial<CustomBlock>> = {
+  text: { heading: 'New text block', body: 'Open the pencil on this block to edit the copy.' },
+  image: {},
+  video: {},
+  quote: { quote: 'Open the pencil on this block to add your quote.' },
+};
+
 const PageSections = ({
   page,
   sections,
@@ -267,12 +325,19 @@ const PageSections = ({
   page: PageId;
   sections: Record<string, ReactNode>;
 }) => {
-  const { getPage, setOrder } = useSiteLayout();
+  const { getPage, setOrder, addBlock } = useSiteLayout();
   const { editing } = useEditMode();
   const state = getPage(page);
-  const order = resolveOrder(page, state.order).filter((id) => sections[id] !== undefined);
+  const blocks = state.blocks ?? {};
+  const blockIds = Object.keys(blocks);
+  const order = resolveOrder(page, state.order, blockIds).filter(
+    (id) => sections[id] !== undefined || blocks[id] !== undefined
+  );
   const defs = PAGE_SECTIONS[page];
-  const labelOf = (id: string) => defs.find((d) => d.id === id)?.label ?? id;
+  const labelOf = (id: string) =>
+    defs.find((d) => d.id === id)?.label ?? (blocks[id] ? BLOCK_LABELS[blocks[id].type] : id);
+  const contentOf = (id: string): ReactNode =>
+    sections[id] !== undefined ? sections[id] : <CustomBlockView block={blocks[id]} />;
 
   if (!editing) {
     return (
@@ -284,10 +349,10 @@ const PageSections = ({
           const cls = padClass(ov.pad);
           return Object.keys(style).length || cls ? (
             <div key={id} className={cls} style={style}>
-              {sections[id]}
+              {contentOf(id)}
             </div>
           ) : (
-            <div key={id}>{sections[id]}</div>
+            <div key={id}>{contentOf(id)}</div>
           );
         })}
       </>
@@ -304,26 +369,69 @@ const PageSections = ({
     setOrder(page, next);
   };
 
+  const insertBlock = (type: BlockType) => {
+    // Persist the currently-resolved order first so the new block lands at
+    // the true end even when no explicit order was stored yet.
+    setOrder(page, order);
+    addBlock(page, { id: newBlockId(), type, anim: 'fade', ...BLOCK_DEFAULTS[type] });
+    // Let the admin see it arrive.
+    window.setTimeout(
+      () => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }),
+      120
+    );
+  };
+
   return (
-    <Reorder.Group
-      as="div"
-      axis="y"
-      values={order}
-      onReorder={(next) => setOrder(page, next as string[])}
-    >
-      {order.map((id) => (
-        <EditableSection
-          key={id}
-          id={id}
-          label={labelOf(id)}
-          page={page}
-          override={state.overrides[id] ?? {}}
-          onMove={(dir) => move(id, dir)}
-        >
-          {sections[id]}
-        </EditableSection>
-      ))}
-    </Reorder.Group>
+    <>
+      <Reorder.Group
+        as="div"
+        axis="y"
+        values={order}
+        onReorder={(next) => setOrder(page, next as string[])}
+      >
+        {order.map((id) => (
+          <EditableSection
+            key={id}
+            id={id}
+            label={labelOf(id)}
+            page={page}
+            override={state.overrides[id] ?? {}}
+            onMove={(dir) => move(id, dir)}
+            block={blocks[id]}
+          >
+            {contentOf(id)}
+          </EditableSection>
+        ))}
+      </Reorder.Group>
+
+      {/* Add-block bar — new blocks land at the bottom; drag them into place */}
+      <div className="py-10 bg-stride-bg">
+        <div className="max-w-3xl mx-auto px-4">
+          <div className="rounded-2xl border-2 border-dashed border-stride-border bg-stride-bg-elev/70 p-5 text-center">
+            <p className="text-xs uppercase tracking-[0.2em] font-semibold text-stride-text-muted mb-3 inline-flex items-center gap-1.5">
+              <Plus className="w-3.5 h-3.5" />
+              Add a block to this page
+            </p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {ADD_BLOCK_OPTIONS.map((o) => (
+                <button
+                  key={o.type}
+                  onClick={() => insertBlock(o.type)}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-stride-border bg-stride-bg text-sm font-medium text-stride-text-strong hover:border-stride-accent hover:text-stride-accent transition-colors"
+                >
+                  <o.icon className="w-4 h-4" />
+                  {o.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-[11px] text-stride-text-muted mt-3">
+              New blocks appear at the bottom — drag the handle to move them anywhere, use the
+              pencil to edit content, font, size and animation.
+            </p>
+          </div>
+        </div>
+      </div>
+    </>
   );
 };
 

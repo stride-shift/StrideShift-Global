@@ -19,6 +19,7 @@ import {
   Minus,
 } from 'lucide-react';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
 
 /* ─────────────────────────────────────────────────────── types */
 
@@ -40,6 +41,9 @@ interface ContactMessage {
   status?: MessageStatus | null;
   archived_at?: string | null;
   referrer?: string | null;
+  // Added by 20260717014500 — who last changed the status, and when.
+  status_by?: string | null;
+  status_at?: string | null;
 }
 
 interface NewsletterSubscriber {
@@ -179,6 +183,8 @@ const EMPTY_STATES: Record<MessageFilter, { title: string; hint: string }> = {
 /* ─────────────────────────────────── main panel export */
 
 const MessagesPanel = () => {
+  const { user } = useAuth();
+  const adminName = user?.email?.split('@')[0] ?? 'admin';
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [subscribers, setSubscribers] = useState<NewsletterSubscriber[]>([]);
   const [loading, setLoading] = useState(true);
@@ -236,14 +242,21 @@ const MessagesPanel = () => {
     }
   };
 
+  // Every workflow change is signed: "who moved it here, and when".
+  const attribution = () => ({
+    status_by: adminName,
+    status_at: new Date().toISOString(),
+  });
+
   const setStatus = (m: ContactMessage, status: MessageStatus) => {
     if (statusOf(m) === status) return;
-    void updateMessage(m.id, { status });
+    void updateMessage(m.id, { status, ...attribution() });
   };
 
   const toggleArchive = (m: ContactMessage) => {
     void updateMessage(m.id, {
       archived_at: m.archived_at ? null : new Date().toISOString(),
+      ...attribution(),
     });
   };
 
@@ -651,6 +664,12 @@ const MessagesPanel = () => {
                         );
                       })}
                     </div>
+                    {m.status_by && m.status_at && (
+                      <span className="text-[11px] text-stride-text-muted">
+                        set by <span className="text-stride-text-strong font-medium">{m.status_by}</span>{' '}
+                        · {relativeTime(m.status_at)}
+                      </span>
+                    )}
                     <div className="flex-grow" />
                     <button
                       onClick={() => toggleArchive(m)}

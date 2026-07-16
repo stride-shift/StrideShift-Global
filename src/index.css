@@ -157,9 +157,14 @@
   }
 
   html, body {
-    @apply m-0 p-0 overflow-x-hidden;
+    @apply m-0 p-0;
     width: 100%;
     max-width: 100%;
+    /* clip (not hidden): hidden turns the body into a scroll container and
+       silently breaks every position:sticky element on the page. clip does
+       the same horizontal clipping without that side effect. */
+    overflow-x: hidden;
+    overflow-x: clip;
   }
 
   body {

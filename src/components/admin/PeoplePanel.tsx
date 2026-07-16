@@ -77,6 +77,10 @@ const fmt = (iso: string | null) => {
   });
 };
 
+/** Short week-start label, e.g. "May 25". */
+const weekLabel = (d: Date) =>
+  d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
 /** Compact relative time, e.g. "3h ago". */
 const timeAgo = (iso: string | null) => {
   if (!iso) return 'never';
@@ -939,6 +943,41 @@ const PersonRow = ({
     };
   }, [entries]);
 
+  /** Data for the compact visual summary: top action types + weekly counts. */
+  const visuals = useMemo(() => {
+    if (entries.length === 0) return null;
+
+    // "Actions by type" — top 4 action types by count.
+    const counts = new Map<string, number>();
+    for (const e of entries) {
+      counts.set(e.action, (counts.get(e.action) ?? 0) + 1);
+    }
+    const topTypes = [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4);
+    const maxType = Math.max(...topTypes.map(([, c]) => c), 1);
+
+    // "Activity over time" — one bucket per week for the last 8 weeks.
+    const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+    const currentWeekStart = new Date();
+    currentWeekStart.setHours(0, 0, 0, 0);
+    currentWeekStart.setDate(currentWeekStart.getDate() - currentWeekStart.getDay());
+    const weeks = Array.from({ length: 8 }, (_, i) => ({
+      start: new Date(currentWeekStart.getTime() - (7 - i) * WEEK_MS),
+      count: 0,
+    }));
+    const rangeStart = weeks[0].start.getTime();
+    for (const e of entries) {
+      const t = new Date(e.created_at).getTime();
+      if (isNaN(t)) continue;
+      const idx = Math.floor((t - rangeStart) / WEEK_MS);
+      if (idx >= 0 && idx < weeks.length) weeks[idx].count += 1;
+    }
+    const maxWeek = Math.max(...weeks.map((w) => w.count), 1);
+
+    return { topTypes, maxType, weeks, maxWeek };
+  }, [entries]);
+
   const name = nameOf(profile);
 
   return (
@@ -1048,9 +1087,83 @@ const PersonRow = ({
                     </p>
                   )}
 
-                  {/* Timeline: most recent 15 */}
+                  {/* Visual summary: action-type bars + weekly activity */}
+                  {visuals && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {/* Actions by type — horizontal mini-bars */}
+                      <div className="bg-stride-bg border border-stride-border rounded-xl p-3.5">
+                        <p className="text-[11px] uppercase tracking-wider text-stride-text-muted font-semibold mb-2.5">
+                          Actions by type
+                        </p>
+                        <div className="space-y-2">
+                          {visuals.topTypes.map(([action, count]) => (
+                            <div key={action}>
+                              <div className="flex items-baseline justify-between gap-2 mb-1">
+                                <span className="text-xs text-stride-text-strong truncate">
+                                  {actionLabel(action)}
+                                </span>
+                                <span className="flex-shrink-0 text-xs text-stride-text-muted tabular-nums">
+                                  {count}
+                                </span>
+                              </div>
+                              <div className="h-1.5 rounded-full bg-stride-border/50 overflow-hidden">
+                                <div
+                                  className="h-full rounded-full"
+                                  style={{
+                                    width: `${(count / visuals.maxType) * 100}%`,
+                                    background: 'hsl(var(--stride-sky))',
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Activity over time — last 8 weeks */}
+                      <div className="bg-stride-bg border border-stride-border rounded-xl p-3.5">
+                        <p className="text-[11px] uppercase tracking-wider text-stride-text-muted font-semibold mb-2.5">
+                          Activity over time
+                        </p>
+                        <div className="flex items-end gap-1.5" style={{ height: 48 }}>
+                          {visuals.weeks.map((w) => (
+                            <div
+                              key={w.start.getTime()}
+                              className="flex-1 h-full flex flex-col justify-end"
+                              title={`${w.count} action${w.count === 1 ? '' : 's'} · week of ${weekLabel(w.start)}`}
+                            >
+                              <div
+                                className="w-full rounded-t-sm"
+                                style={
+                                  w.count > 0
+                                    ? {
+                                        height: `${Math.max((w.count / visuals.maxWeek) * 100, 8)}%`,
+                                        background: 'hsl(var(--stride-sky))',
+                                      }
+                                    : {
+                                        height: 1,
+                                        background: 'hsl(var(--stride-border))',
+                                      }
+                                }
+                              />
+                            </div>
+                          ))}
+                        </div>
+                        <div className="flex justify-between mt-1.5">
+                          <span className="text-[10px] text-stride-text-muted tabular-nums">
+                            {weekLabel(visuals.weeks[0].start)}
+                          </span>
+                          <span className="text-[10px] text-stride-text-muted tabular-nums">
+                            {weekLabel(visuals.weeks[visuals.weeks.length - 1].start)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Timeline: most recent 15, in a scrollable box */}
                   {entries.length > 0 && (
-                    <ul className="space-y-0.5">
+                    <ul className="max-h-64 overflow-y-auto rounded-xl border border-stride-border/60 px-3 py-1 space-y-0.5">
                       {entries.slice(0, 15).map((row) => {
                         const Icon = actionIcon(row.action);
                         const res = resourceLabel(row.resource);

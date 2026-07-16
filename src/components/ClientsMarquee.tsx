@@ -21,7 +21,6 @@ const CLIENTS: ClientBrand[] = [
   { name: 'Implats', src: '/clients/implats.png' },
   { name: 'Masterdrive', src: '/clients/masterdrive.png' },
   { name: 'Maxtec', src: '/clients/maxtec.png' },
-  { name: 'Myriad Capital', src: '/clients/myriad-capital.png' },
   { name: 'Nedbank', src: '/clients/nedbank.webp' },
   { name: 'NTT', src: '/clients/ntt.png' },
   { name: 'Oppenheimer Memorial Trust', src: '/clients/oppenheimer-memorial-trust.jpg' },
