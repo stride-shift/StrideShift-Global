@@ -10,6 +10,7 @@ import { RevealOnScrollRoot } from '@/hooks/useScrollReveal';
 import { ScrollTiltedGrid } from '@/components/ui/scroll-tilted-grid';
 import SectionEyebrow from '@/components/SectionEyebrow';
 import { useSiteContent } from '@/hooks/useSiteContent';
+import CtaPanel from '@/components/CtaPanel';
 
 const container = {
   hidden: { opacity: 0 },
@@ -588,43 +589,9 @@ const SolutionDetail = () => {
         </div>
       </section>
 
-      {/* CTA — warm gradient panel, matches About-page treatment, with a
-          mb-12 gap from the footer so it doesn't slam into it */}
-      {solution.cta && (
-        <section className="relative py-14 md:py-20 mb-12 md:mb-20 overflow-hidden text-white text-center">
-          <div className="absolute inset-0 bg-gradient-to-br from-stride-ink via-stride-sky/40 to-stride-sage/35" />
-          <div className="absolute inset-0 bg-stride-ink/55" />
-          <div
-            className="absolute -top-20 -right-20 w-[28rem] h-[28rem] rounded-full bg-stride-gold/15 blur-3xl"
-            aria-hidden="true"
-          />
-          <div
-            className="absolute -bottom-24 -left-24 w-[24rem] h-[24rem] rounded-full bg-stride-sky/20 blur-3xl"
-            aria-hidden="true"
-          />
-          <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 reveal-on-scroll">
-            <span className="inline-block mb-4 text-[11px] uppercase tracking-[0.28em] text-stride-gold font-semibold">
-              What's next
-            </span>
-            {solution.cta.title && (
-              <h2
-                className="font-display text-3xl md:text-4xl lg:text-5xl mb-4 tracking-tight"
-                dangerouslySetInnerHTML={{ __html: solution.cta.title }}
-              />
-            )}
-            {solution.cta.sub && (
-              <p className="text-white/90 mb-8 leading-relaxed">{solution.cta.sub}</p>
-            )}
-            <Link
-              to="/contact"
-              className="inline-flex items-center px-7 py-3.5 bg-stride-cream text-stride-ink rounded-full hover:shadow-2xl hover:-translate-y-0.5 transition-all group font-semibold"
-            >
-              Start a conversation
-              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
-        </section>
-      )}
+      {/* CTA — shared floating gradient panel (same treatment as About and
+          the Solutions listing), with breathing room before the footer */}
+      {solution.cta && <CtaPanel titleHtml={solution.cta.title} sub={solution.cta.sub} />}
 
       {/* Floating Gallery button — sits next to the global Let's-talk bubble */}
       <button

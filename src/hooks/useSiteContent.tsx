@@ -102,6 +102,9 @@ export const EMPTY_SECTION_STYLE: SectionStyle = {
 };
 
 export interface SiteContent {
+  /** Content revision — lets fresh code defaults win over stale saved rows
+   *  for specific migrations (see migrateContent). */
+  contentV?: number;
   home: {
     soundFamiliarTitle: string;
     soundFamiliarHighlight: string;
@@ -156,7 +159,11 @@ export interface SiteContent {
   posts: BlogPost[];
 }
 
+/** Bump when saved content rows must be migrated (see migrateContent). */
+export const CONTENT_VERSION = 2;
+
 export const DEFAULT_CONTENT: SiteContent = {
+  contentV: CONTENT_VERSION,
   home: {
     soundFamiliarTitle: hero.title,
     soundFamiliarHighlight: hero.highlight,
@@ -240,6 +247,43 @@ interface SiteContentState {
 
 const SiteContentContext = createContext<SiteContentState | null>(null);
 
+/**
+ * One-off migrations applied to content saved before CONTENT_VERSION:
+ *  v2 — ensure the AI agent team members (Cornelia, Juno Finn) exist, and
+ *       drop the old Maria / GSK testimonial that came from the legacy site.
+ * Runs in-memory on every load until an admin save stamps the new version.
+ */
+function migrateContent(c: SiteContent, storedV: number): SiteContent {
+  if (storedV >= CONTENT_VERSION) return c;
+  const agentDefaults = DEFAULT_CONTENT.team.members.filter(
+    (m) => m.name === 'Cornelia' || m.name === 'Juno Finn'
+  );
+  const members = [...c.team.members];
+  for (const agent of agentDefaults) {
+    if (!members.some((m) => m.name.toLowerCase() === agent.name.toLowerCase())) {
+      members.push({ ...agent });
+    }
+  }
+  return {
+    ...c,
+    contentV: CONTENT_VERSION,
+    home: {
+      ...c.home,
+      // The old highlight duplicated the hero's "AI-powered think tank…"
+      // sentence — swap it for the new distinct line.
+      soundFamiliarHighlight: /think tank for leadership teams/i.test(
+        c.home.soundFamiliarHighlight
+      )
+        ? DEFAULT_CONTENT.home.soundFamiliarHighlight
+        : c.home.soundFamiliarHighlight,
+    },
+    team: { ...c.team, members },
+    testimonials: c.testimonials.filter(
+      (t) => !/maria|gsk/i.test(`${t.name} ${t.role}`)
+    ),
+  };
+}
+
 /** Deep-merge stored content over defaults so new fields always exist. */
 function mergeContent(stored: any): SiteContent {
   if (!stored || typeof stored !== 'object') return DEFAULT_CONTENT;
@@ -252,7 +296,8 @@ function mergeContent(stored: any): SiteContent {
     style: { ...EMPTY_SECTION_STYLE, ...(s?.style || {}) },
     extras: Array.isArray(s?.extras) ? s.extras : def.extras ?? [],
   });
-  return {
+  const merged: SiteContent = {
+    contentV: typeof stored.contentV === 'number' ? stored.contentV : 0,
     home: { ...DEFAULT_CONTENT.home, ...(stored.home || {}) },
     about: mergeSection(DEFAULT_CONTENT.about, stored.about),
     team: mergeSection(DEFAULT_CONTENT.team, stored.team),
@@ -267,6 +312,7 @@ function mergeContent(stored: any): SiteContent {
         : {},
     posts: Array.isArray(stored.posts) ? stored.posts : DEFAULT_CONTENT.posts,
   };
+  return migrateContent(merged, merged.contentV ?? 0);
 }
 
 function readLocal(): SiteContent {

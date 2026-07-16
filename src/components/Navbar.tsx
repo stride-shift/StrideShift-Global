@@ -71,7 +71,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           <div className="flex-shrink-0">
             <Link to="/" className="flex items-center">
-              <Logo tone={navIsScrolled ? 'dark' : 'light'} />
+              <Logo />
             </Link>
           </div>
 

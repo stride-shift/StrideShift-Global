@@ -9,6 +9,7 @@ import { RevealOnScrollRoot } from '@/hooks/useScrollReveal';
 import { useSiteContent } from '@/hooks/useSiteContent';
 import PageHeroBackground from '@/components/PageHeroBackground';
 import SectionEyebrow from '@/components/SectionEyebrow';
+import CtaPanel from '@/components/CtaPanel';
 
 const Solutions = () => {
   const [filter, setFilter] = useState<string>('All');
@@ -166,25 +167,12 @@ const Solutions = () => {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-16 md:py-24 bg-stride-navy text-white text-center">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl mb-4 tracking-tight">
-            Don't see your problem?
-          </h2>
-          <p className="text-white/85 mb-8 leading-relaxed">
-            We bundle these capabilities differently for every engagement. Tell us what you're
-            facing — we'll show you the shape of a solution.
-          </p>
-          <Link
-            to="/contact"
-            className="inline-flex items-center px-7 py-3 bg-white text-stride-navy rounded-lg hover:bg-stride-accent-soft transition-all group font-semibold"
-          >
-            Start a conversation
-            <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </Link>
-        </div>
-      </section>
+      {/* CTA — floating gradient panel with breathing room before the footer,
+          matching the solution detail pages */}
+      <CtaPanel
+        title="Don't see your problem?"
+        sub="We bundle these capabilities differently for every engagement. Tell us what you're facing — we'll show you the shape of a solution."
+      />
     </PageLayout>
   );
 };

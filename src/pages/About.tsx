@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
-import { ArrowRight, CheckCircle2, XCircle } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { CheckCircle2, XCircle } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 import SEO from '@/components/SEO';
 import { RevealOnScrollRoot } from '@/hooks/useScrollReveal';
@@ -8,6 +7,7 @@ import { useSiteContent } from '@/hooks/useSiteContent';
 import PageHeroBackground from '@/components/PageHeroBackground';
 import SectionEyebrow from '@/components/SectionEyebrow';
 import PageSections from '@/components/editor/PageSections';
+import CtaPanel from '@/components/CtaPanel';
 
 const container = {
   hidden: { opacity: 0 },
@@ -208,36 +208,7 @@ const About = () => {
       </section>
 
           ),
-          cta: (
-      <section className="relative py-16 md:py-24 overflow-hidden text-white text-center">
-        <div className="absolute inset-0 bg-gradient-to-br from-stride-ink via-stride-sky/40 to-stride-sage/35" />
-        <div className="absolute inset-0 bg-stride-ink/55" />
-        <div
-          className="absolute -top-20 -right-20 w-[28rem] h-[28rem] rounded-full bg-stride-gold/15 blur-3xl"
-          aria-hidden="true"
-        />
-        <div
-          className="absolute -bottom-24 -left-24 w-[24rem] h-[24rem] rounded-full bg-stride-sky/20 blur-3xl"
-          aria-hidden="true"
-        />
-        <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <span className="inline-block mb-4 text-[11px] uppercase tracking-[0.28em] text-stride-gold font-semibold">
-            What's next
-          </span>
-          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl mb-4 tracking-tight">
-            {about.ctaTitle}
-          </h2>
-          <p className="text-white/90 mb-8 leading-relaxed">{about.ctaSub}</p>
-          <Link
-            to="/contact"
-            className="inline-flex items-center px-7 py-3.5 bg-stride-cream text-stride-ink rounded-full hover:shadow-2xl hover:-translate-y-0.5 transition-all group font-semibold"
-          >
-            Start a conversation
-            <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </Link>
-        </div>
-      </section>
-          ),
+          cta: <CtaPanel title={about.ctaTitle} sub={about.ctaSub} />,
         }}
       />
     </PageLayout>

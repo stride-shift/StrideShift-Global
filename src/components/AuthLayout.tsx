@@ -21,7 +21,7 @@ const AuthLayout = ({ children, eyebrow = 'StrideShift', title, description, foo
       <header className="flex items-center justify-between px-4 md:px-8 py-4 border-b border-stride-border/60">
         <Link to="/" className="flex items-center gap-2 text-stride-text-strong">
           <ArrowLeft className="w-4 h-4" />
-          <Logo tone="dark" />
+          <Logo />
         </Link>
         <ThemeToggle variant="standalone" />
       </header>

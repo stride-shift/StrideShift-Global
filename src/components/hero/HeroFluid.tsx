@@ -172,7 +172,7 @@ const HeroFluid = () => {
                 settings.heroAlign === 'center' ? 'justify-center' : ''
               }`}
             >
-              {['30+ clients', '16 countries, 3 continents', '23 AI products shipped'].map((t) => (
+              {['60+ clients', '16 countries, 3 continents', '23 AI products shipped'].map((t) => (
                 <span key={t} className="flex items-center gap-1.5">
                   <span className="w-1 h-1 rounded-full bg-stride-sage" />
                   {t}

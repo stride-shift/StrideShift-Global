@@ -100,6 +100,9 @@ export type HeroPrimaryButtonStyle = 'cream' | 'navy' | 'gold' | 'custom';
 export type HeroBackgroundDirection = 'br' | 'bl' | 'tr' | 'tl' | 'b' | 'r';
 
 export interface SiteSettings {
+  /** Copy revision — lets fresh code defaults win over stale saved rows.
+   *  Bump COPY_VERSION whenever the default hero copy must reach everyone. */
+  copyV?: number;
   heroTemplate: HeroTemplate;
   heroImageUrl: string;
   heroHeadline: string;
@@ -121,15 +124,20 @@ export interface SiteSettings {
   heroSecondaryLabel: string;
 }
 
+/** Bump when default hero copy changes and must override stale saved rows. */
+export const COPY_VERSION = 5;
+
 export const DEFAULT_SETTINGS: SiteSettings = {
+  copyV: COPY_VERSION,
   heroTemplate: 'fluid',
   heroImageUrl:
     'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1920&q=80',
-  // Kept distinct from the "From messy problem…" headline in the Sound Familiar
-  // section below — the hero sets the tone, that section carries the detail.
-  // The rotating words complete the headline: "Better thinking, better ___".
-  heroHeadline: 'Better thinking, better',
-  heroRotatingWords: 'results, decisions, strategy, performance',
+  // Agreed in the 2026-06-30 team meeting: "We make you smarter so you can
+  // perform better" is the headline; the think-tank sentence (without
+  // "leadership") is the strapline below it. Rotating words stay available
+  // as a feature but default off — the scrolling-word idea wasn't chosen.
+  heroHeadline: 'We make you smarter so you can perform better.',
+  heroRotatingWords: '',
   heroSubhead:
     'An AI-powered think tank for teams facing complex, open-ended challenges and making high-stakes decisions.',
   heroAlign: 'left',
@@ -150,9 +158,11 @@ export const DEFAULT_SETTINGS: SiteSettings = {
 // v3 — bumped when the hero copy changed to the new "AI-powered think tank
 // … high-stakes decisions" sentence so existing visitors see the new default
 // instead of their cached v2 subhead.
-// v4 — bumped for the "Better thinking, better ___" rotating-word headline
-// and the subhead dropping "leadership".
-const STORAGE_KEY = 'stride-site-settings-v4';
+// v4 — bumped for the rotating-word headline and the subhead dropping
+// "leadership".
+// v5 — bumped for the agreed "We make you smarter so you can perform better"
+// headline with the think-tank sentence as strapline (team meeting 2026-06-30).
+const STORAGE_KEY = 'stride-site-settings-v5';
 const SETTINGS_ROW_ID = 1;
 
 interface SiteSettingsState {
@@ -203,7 +213,17 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
           .eq('id', SETTINGS_ROW_ID)
           .maybeSingle();
         if (data?.data) {
-          const merged = { ...DEFAULT_SETTINGS, ...data.data };
+          const stored = data.data as Partial<SiteSettings>;
+          const merged = { ...DEFAULT_SETTINGS, ...stored };
+          // Rows saved before the current copy revision carry outdated hero
+          // copy (e.g. the old "…leadership teams…" subhead). The new
+          // defaults win until the admin saves again, which stamps copyV.
+          if ((stored.copyV ?? 0) < COPY_VERSION) {
+            merged.heroHeadline = DEFAULT_SETTINGS.heroHeadline;
+            merged.heroRotatingWords = DEFAULT_SETTINGS.heroRotatingWords;
+            merged.heroSubhead = DEFAULT_SETTINGS.heroSubhead;
+            merged.copyV = COPY_VERSION;
+          }
           setSettings(merged);
           writeLocal(merged);
         }

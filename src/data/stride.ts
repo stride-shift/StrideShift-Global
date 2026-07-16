@@ -54,13 +54,16 @@ export const hero = {
 /* ============================================
    STATS — real numbers from the live site
    ============================================ */
+// Figures confirmed in the 2026-06-30 team meeting: keep 60+ clients,
+// "16 countries, 3 continents" (not "African countries"), thousands of
+// problems solved.
 export const marqueeStats = [
-  { strong: '30+', label: 'Clients' },
+  { strong: '60+', label: 'Clients' },
   { strong: '16', label: 'Countries' },
   { strong: '3', label: 'Continents' },
   { strong: '23', label: 'AI products shipped' },
   { strong: 'R200M+', label: 'Decisions supported' },
-  { strong: '∞', label: 'Customer problems solved' },
+  { strong: '1000s', label: 'Problems solved with AI' },
 ];
 
 /* ============================================

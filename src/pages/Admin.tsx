@@ -170,7 +170,7 @@ const Admin = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
             <Link to="/">
-              <Logo tone="dark" />
+              <Logo />
             </Link>
             <span className="text-xs px-2 py-0.5 rounded-full bg-stride-accent/15 text-stride-accent font-semibold uppercase tracking-wider">
               Admin
