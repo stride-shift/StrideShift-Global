@@ -504,8 +504,8 @@ const ContentPanel = () => {
 
   return (
     <div>
-      {/* Save bar — modernised pill bar */}
-      <div className="sticky top-16 z-20 mb-5">
+      {/* Save bar — sticks just below the admin tab bar */}
+      <div className="sticky top-[8.25rem] z-[19] mb-5">
         <div className="flex flex-wrap items-center gap-3 bg-stride-bg-elev/95 backdrop-blur border border-stride-border rounded-2xl px-4 py-3 shadow-sm">
           <button
             onClick={save}
@@ -561,7 +561,7 @@ const ContentPanel = () => {
 
       <div className="grid lg:grid-cols-[180px_minmax(0,1fr)] xl:grid-cols-[180px_minmax(0,1fr)_400px] gap-6">
         {/* Page selector */}
-        <aside className="lg:sticky lg:top-32 self-start">
+        <aside className="lg:sticky lg:top-[13.5rem] self-start">
           <p className="text-xs uppercase tracking-wider text-stride-text-muted font-semibold mb-2 px-1">
             Select a page
           </p>

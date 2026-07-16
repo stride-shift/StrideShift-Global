@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { site } from '@/data/stride';
 import { getSupabase } from '@/lib/supabase';
+import { captureFirstTouch, getFirstTouch } from '@/lib/firstTouch';
 
 // Common disposable / throwaway email domains. Not exhaustive — just the ones
 // that show up most often in low-effort spam.
@@ -86,6 +87,12 @@ const ContactForm = () => {
   const [formStartTime] = useState<number>(Date.now());
   const { toast } = useToast();
 
+  // Remember where this visitor came from (LinkedIn, Google, …) so the
+  // enquiry carries its origin into the admin Messages panel.
+  useEffect(() => {
+    captureFirstTouch();
+  }, []);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -149,6 +156,7 @@ const ContactForm = () => {
           company: data.company || null,
           message: data.message,
           source: 'contact_page',
+          referrer: getFirstTouch(),
         });
         if (error) throw new Error(error.message);
       } else {

@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Loader2,
   Users,
@@ -15,6 +16,13 @@ import {
   Eye,
   EyeOff,
   Sparkles,
+  Search,
+  ChevronDown,
+  Pencil,
+  FileText,
+  Settings2,
+  Clock,
+  Activity,
 } from 'lucide-react';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
@@ -49,6 +57,13 @@ interface ActivityEntry {
   created_at: string;
 }
 
+/** Per-person lazily fetched activity, keyed by profile id. */
+interface PersonActivityState {
+  status: 'loading' | 'ready' | 'error';
+  entries: ActivityEntry[];
+  error?: string;
+}
+
 const fmt = (iso: string | null) => {
   if (!iso) return '—';
   const d = new Date(iso);
@@ -62,6 +77,76 @@ const fmt = (iso: string | null) => {
   });
 };
 
+/** Compact relative time, e.g. "3h ago". */
+const timeAgo = (iso: string | null) => {
+  if (!iso) return 'never';
+  const t = new Date(iso).getTime();
+  if (isNaN(t)) return '—';
+  const s = Math.floor((Date.now() - t) / 1000);
+  if (s < 45) return 'just now';
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  if (d < 7) return `${d}d ago`;
+  if (d < 30) return `${Math.floor(d / 7)}w ago`;
+  const mo = Math.floor(d / 30);
+  if (mo < 12) return `${mo}mo ago`;
+  return `${Math.floor(d / 365)}y ago`;
+};
+
+/** Friendly labels for every action string the app actually logs. */
+const ACTION_LABELS: Record<string, string> = {
+  'content.save': 'Saved page content',
+  'settings.save': 'Saved landing settings',
+  'profile.rename': 'Renamed a profile',
+  'role.grant_admin': 'Granted admin access',
+  'role.revoke_admin': 'Revoked admin access',
+  'invite.sent_with_email': 'Created a user (credentials emailed)',
+  'invite.sent_with_password': 'Created a user (password shared manually)',
+  'invite.revoke': 'Revoked an invitation',
+  'user.delete': 'Deleted a user',
+};
+
+const actionLabel = (action: string) =>
+  ACTION_LABELS[action] ?? action.replace(/[._]/g, ' ');
+
+const actionIcon = (action: string) => {
+  if (action.startsWith('content.')) return FileText;
+  if (action.startsWith('settings.')) return Settings2;
+  if (action.startsWith('role.')) return ShieldCheck;
+  if (action.startsWith('invite.')) return UserPlus;
+  if (action.startsWith('user.')) return Trash2;
+  if (action.startsWith('profile.')) return Pencil;
+  return Activity;
+};
+
+/** "page:home" → "page home", "profile:x@y.com" → "x@y.com", etc. */
+const resourceLabel = (resource: string | null) => {
+  if (!resource) return null;
+  const idx = resource.indexOf(':');
+  if (idx === -1) return resource;
+  const kind = resource.slice(0, idx);
+  const value = resource.slice(idx + 1);
+  if (kind === 'profile' || kind === 'email') return value;
+  return `${kind} "${value}"`;
+};
+
+const initialsOf = (p: Profile) => {
+  const src = p.display_name || p.full_name || p.email || '?';
+  const words = src
+    .replace(/@.*$/, '')
+    .split(/[\s._-]+/)
+    .filter(Boolean);
+  if (words.length === 0) return '?';
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
+};
+
+const nameOf = (p: Profile) =>
+  p.display_name || p.full_name || p.email || p.id.slice(0, 8);
+
 const PeoplePanel = () => {
   const { user } = useAuth();
   const [tab, setTab] = useState<'users' | 'invites' | 'activity'>('users');
@@ -70,6 +155,13 @@ const PeoplePanel = () => {
   const [activity, setActivity] = useState<ActivityEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // People accordion
+  const [query, setQuery] = useState('');
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [personActivity, setPersonActivity] = useState<
+    Record<string, PersonActivityState>
+  >({});
 
   // Invite form
   const [inviteEmail, setInviteEmail] = useState('');
@@ -121,6 +213,8 @@ const PeoplePanel = () => {
       setProfiles((p.data ?? []) as Profile[]);
       setInvitations((i.data ?? []) as PendingInvitation[]);
       setActivity((a.data ?? []) as ActivityEntry[]);
+      // Cached per-person activity may now be stale — refetch on next expand.
+      setPersonActivity({});
     } catch (e: any) {
       setError(e?.message || 'Could not load people data.');
     } finally {
@@ -131,6 +225,41 @@ const PeoplePanel = () => {
   useEffect(() => {
     void load();
   }, []);
+
+  /** Lazily fetch one person's activity the first time their row is expanded. */
+  const fetchPersonActivity = async (profileId: string) => {
+    const supa = getSupabase();
+    if (!supa) return;
+    setPersonActivity((m) => ({
+      ...m,
+      [profileId]: { status: 'loading', entries: [] },
+    }));
+    const { data, error: err } = await supa
+      .from('admin_activity')
+      .select('*')
+      .eq('admin_id', profileId)
+      .order('created_at', { ascending: false })
+      .limit(200);
+    if (err) {
+      setPersonActivity((m) => ({
+        ...m,
+        [profileId]: { status: 'error', entries: [], error: err.message },
+      }));
+      return;
+    }
+    setPersonActivity((m) => ({
+      ...m,
+      [profileId]: { status: 'ready', entries: (data ?? []) as ActivityEntry[] },
+    }));
+  };
+
+  const toggleRow = (profileId: string) => {
+    const next = openId === profileId ? null : profileId;
+    setOpenId(next);
+    if (next && !personActivity[next]) {
+      void fetchPersonActivity(next);
+    }
+  };
 
   const toggleAdmin = async (target: Profile) => {
     const supa = getSupabase();
@@ -305,6 +434,16 @@ const PeoplePanel = () => {
     void load();
   };
 
+  const filteredProfiles = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return profiles;
+    return profiles.filter((p) =>
+      [p.display_name, p.full_name, p.email]
+        .filter(Boolean)
+        .some((v) => (v as string).toLowerCase().includes(q))
+    );
+  }, [profiles, query]);
+
   if (!isSupabaseConfigured()) {
     return (
       <div className="bg-stride-bg-elev border border-stride-border rounded-2xl p-8 text-center">
@@ -412,43 +551,50 @@ const PeoplePanel = () => {
 
       {/* PEOPLE */}
       {tab === 'users' && (
-        <div className="bg-stride-bg-elev border border-stride-border rounded-2xl overflow-hidden">
+        <div className="space-y-3">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stride-text-muted pointer-events-none" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search people by name or email…"
+              className="w-full pl-9 pr-3 py-2 rounded-xl border border-stride-border bg-stride-bg-elev text-stride-text-strong placeholder:text-stride-text-muted focus:outline-none focus:ring-2 focus:ring-stride-accent text-sm"
+            />
+          </div>
+
           {loading && profiles.length === 0 && (
-            <div className="p-10 text-center text-stride-text-muted">
-              <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+            <div className="bg-stride-bg-elev border border-stride-border rounded-2xl p-10 text-center text-stride-text-muted">
+              <Loader2 className="w-6 h-6 animate-spin text-stride-accent mx-auto" />
             </div>
           )}
           {!loading && profiles.length === 0 && (
-            <div className="p-10 text-center text-stride-text-muted">
+            <div className="bg-stride-bg-elev border border-stride-border rounded-2xl p-10 text-center text-stride-text-muted">
               <Users className="w-10 h-10 mx-auto mb-2 opacity-60" />
-              No profiles yet — invite someone below.
+              No profiles yet — invite someone from the Invitations tab.
             </div>
           )}
-          {profiles.length > 0 && (
-            <table className="w-full text-sm">
-              <thead className="bg-stride-bg border-b border-stride-border">
-                <tr className="text-left text-[11px] uppercase tracking-wider text-stride-text-muted font-semibold">
-                  <th className="px-4 py-2.5">Display name</th>
-                  <th className="px-4 py-2.5">Email</th>
-                  <th className="px-4 py-2.5">Role</th>
-                  <th className="px-4 py-2.5">Joined</th>
-                  <th className="px-4 py-2.5"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {profiles.map((p) => (
-                  <ProfileRow
-                    key={p.id}
-                    profile={p}
-                    isSelf={p.id === user?.id}
-                    onToggleAdmin={() => toggleAdmin(p)}
-                    onRename={(name) => setDisplayName(p, name)}
-                    onDelete={() => deleteUser(p)}
-                  />
-                ))}
-              </tbody>
-            </table>
+          {profiles.length > 0 && filteredProfiles.length === 0 && (
+            <div className="bg-stride-bg-elev border border-stride-border rounded-2xl p-8 text-center text-stride-text-muted text-sm">
+              No one matches "{query.trim()}".
+            </div>
           )}
+
+          {filteredProfiles.map((p) => (
+            <PersonRow
+              key={p.id}
+              profile={p}
+              isSelf={p.id === user?.id}
+              open={openId === p.id}
+              activityState={personActivity[p.id]}
+              onToggle={() => toggleRow(p.id)}
+              onRetryActivity={() => fetchPersonActivity(p.id)}
+              onToggleAdmin={() => toggleAdmin(p)}
+              onRename={(name) => setDisplayName(p, name)}
+              onDelete={() => deleteUser(p)}
+            />
+          ))}
         </div>
       )}
 
@@ -693,7 +839,7 @@ const PeoplePanel = () => {
         <div className="bg-stride-bg-elev border border-stride-border rounded-2xl overflow-hidden">
           {loading && activity.length === 0 && (
             <div className="p-10 text-center text-stride-text-muted">
-              <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+              <Loader2 className="w-6 h-6 animate-spin text-stride-accent mx-auto" />
             </div>
           )}
           {!loading && activity.length === 0 && (
@@ -720,12 +866,12 @@ const PeoplePanel = () => {
                       <p className="text-sm text-stride-text-strong">
                         <span className="font-semibold">{whoLabel}</span>
                         <span className="mx-1.5 text-stride-text-muted">·</span>
-                        <span className="font-mono text-xs text-stride-text-muted">
-                          {row.action}
-                        </span>
+                        <span className="text-stride-text-muted">{actionLabel(row.action)}</span>
                       </p>
                       {row.resource && (
-                        <p className="text-xs text-stride-text-muted mt-0.5">{row.resource}</p>
+                        <p className="text-xs text-stride-text-muted mt-0.5">
+                          {resourceLabel(row.resource)}
+                        </p>
                       )}
                     </div>
                     <span className="flex-shrink-0 text-xs text-stride-text-muted font-mono tabular-nums">
@@ -742,15 +888,25 @@ const PeoplePanel = () => {
   );
 };
 
-const ProfileRow = ({
+/** One person = one compact accordion row. Expanding reveals per-person
+ *  stats, an activity timeline (lazily fetched), and management actions. */
+const PersonRow = ({
   profile,
   isSelf,
+  open,
+  activityState,
+  onToggle,
+  onRetryActivity,
   onToggleAdmin,
   onRename,
   onDelete,
 }: {
   profile: Profile;
   isSelf: boolean;
+  open: boolean;
+  activityState: PersonActivityState | undefined;
+  onToggle: () => void;
+  onRetryActivity: () => void;
   onToggleAdmin: () => void;
   onRename: (name: string) => void;
   onDelete: () => void;
@@ -765,97 +921,265 @@ const ProfileRow = ({
     }
   };
 
+  const entries = activityState?.entries ?? [];
+  const stats = useMemo(() => {
+    if (entries.length === 0) return null;
+    const counts = new Map<string, number>();
+    for (const e of entries) {
+      counts.set(e.action, (counts.get(e.action) ?? 0) + 1);
+    }
+    const top = [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3);
+    return {
+      total: entries.length,
+      atLimit: entries.length >= 200,
+      top,
+      lastActive: entries[0].created_at,
+    };
+  }, [entries]);
+
+  const name = nameOf(profile);
+
   return (
-    <tr className="border-b border-stride-border/60 last:border-b-0">
-      <td className="px-4 py-3">
-        {editing ? (
-          <div className="flex items-center gap-1.5">
-            <input
-              value={draftName}
-              onChange={(e) => setDraftName(e.target.value)}
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') save();
-                if (e.key === 'Escape') {
-                  setEditing(false);
-                  setDraftName(profile.display_name ?? '');
-                }
-              }}
-              placeholder="e.g. kiya-admin"
-              className="px-2 py-1 rounded-md border border-stride-border bg-stride-bg-elev text-sm w-40"
-            />
-            <button onClick={save} className="p-1 text-emerald-500 hover:bg-emerald-500/10 rounded">
-              <Check className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={() => {
-                setEditing(false);
-                setDraftName(profile.display_name ?? '');
-              }}
-              className="p-1 text-stride-text-muted hover:bg-stride-bg rounded"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={() => setEditing(true)}
-            className="text-left hover:text-stride-accent transition-colors group"
-          >
-            <span className="font-medium text-stride-text-strong">
-              {profile.display_name || (
-                <span className="text-stride-text-muted italic">Set display name</span>
-              )}
-            </span>
-            {profile.full_name && profile.full_name !== profile.display_name && (
-              <p className="text-[10px] text-stride-text-muted mt-0.5">{profile.full_name}</p>
+    <div className="bg-stride-bg-elev border border-stride-border rounded-2xl overflow-hidden">
+      {/* Collapsed header row */}
+      <button
+        onClick={onToggle}
+        aria-expanded={open}
+        className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-stride-bg/60 transition-colors"
+      >
+        <span className="flex-shrink-0 w-9 h-9 rounded-full bg-stride-accent/15 text-stride-accent text-xs flex items-center justify-center font-semibold">
+          {initialsOf(profile)}
+        </span>
+        <span className="min-w-0 flex-grow">
+          <span className="flex items-center gap-2 min-w-0">
+            <span className="font-medium text-stride-text-strong truncate">{name}</span>
+            {profile.is_admin && (
+              <span className="flex-shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-stride-accent/15 text-stride-accent text-[10px] uppercase tracking-wider font-semibold">
+                <ShieldCheck className="w-3 h-3" />
+                Admin
+              </span>
             )}
-          </button>
-        )}
-      </td>
-      <td className="px-4 py-3 text-stride-text-muted text-xs">{profile.email}</td>
-      <td className="px-4 py-3">
-        <button
-          onClick={onToggleAdmin}
-          disabled={isSelf}
-          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] uppercase tracking-wider font-semibold transition-colors ${
-            profile.is_admin
-              ? 'bg-stride-accent/15 text-stride-accent hover:bg-stride-accent/25'
-              : 'bg-stride-bg text-stride-text-muted hover:bg-stride-border'
-          } ${isSelf ? 'cursor-not-allowed opacity-70' : ''}`}
-          title={isSelf ? "You can't change your own role" : 'Toggle admin role'}
-        >
-          {profile.is_admin ? (
-            <>
-              <ShieldCheck className="w-3 h-3" />
-              Admin
-            </>
-          ) : (
-            <>
-              <Shield className="w-3 h-3" />
-              Member
-            </>
-          )}
-        </button>
-      </td>
-      <td className="px-4 py-3 text-stride-text-muted font-mono text-xs">{fmt(profile.created_at)}</td>
-      <td className="px-4 py-3 text-right">
-        {isSelf ? (
-          <span className="text-[10px] uppercase tracking-wider text-stride-text-muted">
-            You
+            {isSelf && (
+              <span className="flex-shrink-0 text-[10px] uppercase tracking-wider text-stride-text-muted">
+                You
+              </span>
+            )}
           </span>
-        ) : (
-          <button
-            onClick={onDelete}
-            className="p-1.5 rounded-md text-stride-text-muted hover:text-red-500 hover:bg-red-500/10 transition-colors"
-            aria-label={`Delete ${profile.display_name || profile.email || 'user'}`}
-            title="Delete user"
+          <span className="block text-xs text-stride-text-muted truncate">
+            {profile.email ?? '—'}
+          </span>
+        </span>
+        <span className="flex-shrink-0 hidden sm:inline-flex items-center gap-1.5 text-xs text-stride-text-muted tabular-nums">
+          <Clock className="w-3 h-3" />
+          {profile.last_seen_at ? `Seen ${timeAgo(profile.last_seen_at)}` : 'Never seen'}
+        </span>
+        <ChevronDown
+          className={`flex-shrink-0 w-4 h-4 text-stride-text-muted transition-transform duration-200 ${
+            open ? 'rotate-180' : ''
+          }`}
+        />
+      </button>
+
+      {/* Expanded detail */}
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="detail"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22, ease: 'easeInOut' }}
+            className="overflow-hidden"
           >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
+            <div className="border-t border-stride-border/60 px-4 py-4 space-y-4">
+              {/* Activity: loading / error / stats + timeline */}
+              {(!activityState || activityState.status === 'loading') && (
+                <div className="py-6 text-center">
+                  <Loader2 className="w-5 h-5 animate-spin text-stride-accent mx-auto" />
+                </div>
+              )}
+
+              {activityState?.status === 'error' && (
+                <div className="bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 rounded-xl px-4 py-3 text-sm flex items-center justify-between gap-3">
+                  <span>Couldn't load activity: {activityState.error}</span>
+                  <button
+                    onClick={onRetryActivity}
+                    className="flex-shrink-0 inline-flex items-center gap-1.5 text-xs font-medium hover:underline"
+                  >
+                    <RefreshCcw className="w-3 h-3" />
+                    Retry
+                  </button>
+                </div>
+              )}
+
+              {activityState?.status === 'ready' && (
+                <>
+                  {/* Stats chips */}
+                  {stats ? (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-stride-bg border border-stride-border text-xs text-stride-text-strong">
+                        <Activity className="w-3 h-3 text-stride-accent" />
+                        <span className="font-semibold tabular-nums">
+                          {stats.atLimit ? '200+' : stats.total}
+                        </span>
+                        {stats.total === 1 && !stats.atLimit ? 'action' : 'actions'}
+                      </span>
+                      {stats.top.map(([action, count]) => (
+                        <span
+                          key={action}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-stride-bg border border-stride-border text-xs text-stride-text-muted"
+                        >
+                          {actionLabel(action)}
+                          <span className="font-semibold text-stride-text-strong tabular-nums">
+                            ×{count}
+                          </span>
+                        </span>
+                      ))}
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-stride-bg border border-stride-border text-xs text-stride-text-muted">
+                        <Clock className="w-3 h-3 text-stride-sky" />
+                        Last active {timeAgo(stats.lastActive)}
+                      </span>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-stride-text-muted py-1">
+                      No recorded activity yet.
+                    </p>
+                  )}
+
+                  {/* Timeline: most recent 15 */}
+                  {entries.length > 0 && (
+                    <ul className="space-y-0.5">
+                      {entries.slice(0, 15).map((row) => {
+                        const Icon = actionIcon(row.action);
+                        const res = resourceLabel(row.resource);
+                        return (
+                          <li key={row.id} className="flex items-start gap-2.5 py-1.5">
+                            <span className="flex-shrink-0 mt-0.5 w-6 h-6 rounded-full bg-stride-bg border border-stride-border flex items-center justify-center">
+                              <Icon className="w-3 h-3 text-stride-accent" />
+                            </span>
+                            <span className="min-w-0 flex-grow text-sm">
+                              <span className="text-stride-text-strong">
+                                {actionLabel(row.action)}
+                              </span>
+                              {res && (
+                                <span className="text-stride-text-muted"> — {res}</span>
+                              )}
+                            </span>
+                            <span
+                              className="flex-shrink-0 text-xs text-stride-text-muted tabular-nums"
+                              title={fmt(row.created_at)}
+                            >
+                              {timeAgo(row.created_at)}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </>
+              )}
+
+              {/* Management actions */}
+              <div className="border-t border-stride-border/60 pt-3 flex flex-wrap items-center gap-2">
+                {editing ? (
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      value={draftName}
+                      onChange={(e) => setDraftName(e.target.value)}
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') save();
+                        if (e.key === 'Escape') {
+                          setEditing(false);
+                          setDraftName(profile.display_name ?? '');
+                        }
+                      }}
+                      placeholder="e.g. kiya-admin"
+                      className="px-2 py-1 rounded-md border border-stride-border bg-stride-bg-elev text-stride-text-strong text-sm w-44 focus:outline-none focus:ring-2 focus:ring-stride-accent"
+                    />
+                    <button
+                      onClick={save}
+                      className="p-1 text-emerald-500 hover:bg-emerald-500/10 rounded"
+                      aria-label="Save display name"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditing(false);
+                        setDraftName(profile.display_name ?? '');
+                      }}
+                      className="p-1 text-stride-text-muted hover:bg-stride-bg rounded"
+                      aria-label="Cancel rename"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setDraftName(profile.display_name ?? '');
+                      setEditing(true);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-stride-bg border border-stride-border text-xs text-stride-text-strong hover:bg-stride-bg-elev transition-colors"
+                  >
+                    <Pencil className="w-3 h-3" />
+                    {profile.display_name ? 'Rename' : 'Set display name'}
+                  </button>
+                )}
+
+                <button
+                  onClick={onToggleAdmin}
+                  disabled={isSelf}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                    profile.is_admin
+                      ? 'bg-stride-accent/15 text-stride-accent hover:bg-stride-accent/25'
+                      : 'bg-stride-bg border border-stride-border text-stride-text-muted hover:text-stride-text-strong'
+                  } ${isSelf ? 'cursor-not-allowed opacity-60' : ''}`}
+                  title={isSelf ? "You can't change your own role" : 'Toggle admin role'}
+                >
+                  {profile.is_admin ? (
+                    <>
+                      <ShieldCheck className="w-3 h-3" />
+                      Remove admin
+                    </>
+                  ) : (
+                    <>
+                      <Shield className="w-3 h-3" />
+                      Make admin
+                    </>
+                  )}
+                </button>
+
+                {!isSelf && (
+                  <button
+                    onClick={onDelete}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-stride-bg border border-stride-border text-xs text-stride-text-muted hover:text-red-500 hover:border-red-500/40 hover:bg-red-500/10 transition-colors"
+                    aria-label={`Delete ${profile.display_name || profile.email || 'user'}`}
+                    title="Delete user"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    Delete user
+                  </button>
+                )}
+
+                <span className="ml-auto text-[11px] text-stride-text-muted font-mono">
+                  Joined {fmt(profile.created_at)}
+                </span>
+              </div>
+
+              {profile.full_name && profile.full_name !== profile.display_name && (
+                <p className="text-[11px] text-stride-text-muted -mt-2">
+                  Full name: {profile.full_name}
+                </p>
+              )}
+            </div>
+          </motion.div>
         )}
-      </td>
-    </tr>
+      </AnimatePresence>
+    </div>
   );
 };
 

@@ -228,21 +228,24 @@ const Admin = () => {
           ))}
         </div>
 
-        {/* Tabs — pill style, modern */}
-        <div className="inline-flex bg-stride-bg-elev border border-stride-border rounded-full p-1 mb-8 shadow-sm">
-          {(['overview', 'design', 'analytics', 'landing', 'content', 'messages', 'people'] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`px-4 sm:px-5 py-2 rounded-full text-sm font-medium transition-all capitalize ${
-                tab === t
-                  ? 'bg-stride-navy text-white shadow-md'
-                  : 'text-stride-text-muted hover:text-stride-text-strong'
-              }`}
-            >
-              {t}
-            </button>
-          ))}
+        {/* Tabs — pill style, pinned below the header so switching sections
+            never requires scrolling back up */}
+        <div className="sticky top-16 z-20 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3 mb-5 bg-stride-bg/90 backdrop-blur">
+          <div className="inline-flex bg-stride-bg-elev border border-stride-border rounded-full p-1 shadow-sm overflow-x-auto max-w-full">
+            {(['overview', 'design', 'analytics', 'landing', 'content', 'messages', 'people'] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`px-4 sm:px-5 py-2 rounded-full text-sm font-medium transition-all capitalize whitespace-nowrap ${
+                  tab === t
+                    ? 'bg-stride-navy text-white shadow-md'
+                    : 'text-stride-text-muted hover:text-stride-text-strong'
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Tab content */}

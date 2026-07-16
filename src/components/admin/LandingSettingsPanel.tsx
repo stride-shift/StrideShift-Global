@@ -7,7 +7,6 @@ import {
   Type,
   Layers,
   Sliders,
-  Compass,
   ArrowRight,
 } from 'lucide-react';
 import {
@@ -431,14 +430,6 @@ const LandingSettingsPanel = () => {
     }
   };
 
-  const directions: { id: SiteSettings['heroBackgroundDirection']; label: string }[] = [
-    { id: 'tl', label: '↖' },
-    { id: 'tr', label: '↗' },
-    { id: 'r', label: '→' },
-    { id: 'br', label: '↘' },
-    { id: 'bl', label: '↙' },
-  ];
-
   return (
     <div className="grid lg:grid-cols-[1.05fr_1fr] gap-5 items-start">
       {/* ╭───── LEFT — editor ─────╮ */}
@@ -469,24 +460,22 @@ const LandingSettingsPanel = () => {
         <section className="mb-6">
           <p className={`${SECTION_LABEL} mb-3`}>Content</p>
           <div className="space-y-4">
-            <label className="block">
-              <span className={labelText}>
-                Hero image
-                {draft.heroTemplate !== 'classic' && (
-                  <span className="text-stride-text-muted font-normal text-[11px] ml-1">
-                    (Classic template only)
-                  </span>
-                )}
-              </span>
-              <div className="mt-1">
-                <ImageUpload
-                  value={draft.heroImageUrl}
-                  onChange={(url) => setDraft({ ...draft, heroImageUrl: url })}
-                  folder="hero"
-                  compact
-                />
-              </div>
-            </label>
+            {/* Only the Classic template uses an image — hiding the field for
+                the others removes a whole class of "why isn't this doing
+                anything?" confusion. */}
+            {draft.heroTemplate === 'classic' && (
+              <label className="block">
+                <span className={labelText}>Hero image</span>
+                <div className="mt-1">
+                  <ImageUpload
+                    value={draft.heroImageUrl}
+                    onChange={(url) => setDraft({ ...draft, heroImageUrl: url })}
+                    folder="hero"
+                    compact
+                  />
+                </div>
+              </label>
+            )}
 
             <TextField
               label="Headline"
@@ -496,10 +485,17 @@ const LandingSettingsPanel = () => {
             />
 
             <TextField
-              label="Rotating words (comma-separated — the scrolling word after the headline; leave empty for a static headline)"
+              label="Static prefix before the scrolling word (e.g. “Smarter”)"
+              value={draft.heroRotatingPrefix}
+              onChange={(v) => setDraft({ ...draft, heroRotatingPrefix: v })}
+              placeholder="Smarter"
+            />
+
+            <TextField
+              label="Scrolling words (comma-separated — they roll in gold after the prefix, on every template; leave empty for a static headline)"
               value={draft.heroRotatingWords}
               onChange={(v) => setDraft({ ...draft, heroRotatingWords: v })}
-              placeholder="results, decisions, strategy, performance"
+              placeholder="decisions, sales, marketing, strategy"
             />
 
             <TextField
@@ -618,31 +614,6 @@ const LandingSettingsPanel = () => {
               />
             </label>
 
-            <div>
-              <span className={labelText}>Background direction</span>
-              <div className="mt-1.5 grid grid-cols-5 gap-1.5">
-                {directions.map((d) => {
-                  const active = draft.heroBackgroundDirection === d.id;
-                  return (
-                    <button
-                      key={d.id}
-                      type="button"
-                      onClick={() =>
-                        setDraft({ ...draft, heroBackgroundDirection: d.id })
-                      }
-                      className={`py-2.5 rounded-lg text-base font-bold transition-all ${
-                        active
-                          ? 'bg-stride-navy text-white shadow-sm'
-                          : 'bg-stride-bg border border-stride-border text-stride-text-strong hover:border-stride-accent/50'
-                      }`}
-                      aria-label={`Direction ${d.id}`}
-                    >
-                      {d.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
           </div>
         </section>
 
@@ -750,53 +721,9 @@ const LandingSettingsPanel = () => {
               label="Overlay|Overlay darkness"
               value={`${Math.round(draft.heroOverlayOpacity * 100)}%`}
             />
-            <SummaryRow
-              icon={Compass}
-              label={`${
-                ({ tl: 'Top-left', tr: 'Top-right', r: 'Right', br: 'Bottom-right', bl: 'Bottom-left' } as Record<string, string>)[
-                  draft.heroBackgroundDirection
-                ]
-              }|Background direction`}
-              value={draft.heroBackgroundDirection}
-            />
           </div>
         </div>
 
-        {/* Quick edit — duplicate the key text fields for fast iteration */}
-        <div className="bg-stride-bg-elev border border-stride-border rounded-2xl p-6">
-          <h4 className="font-display text-lg text-stride-text-strong tracking-tight">
-            Quick edit
-          </h4>
-          <p className="text-xs text-stride-text-muted mt-0.5 mb-3">
-            Make quick updates to key elements.
-          </p>
-          <div className="space-y-3">
-            <TextField
-              label="Headline"
-              value={draft.heroHeadline}
-              onChange={(v) => setDraft({ ...draft, heroHeadline: v })}
-            />
-            <TextField
-              label="Sub-headline"
-              value={draft.heroSubhead}
-              onChange={(v) => setDraft({ ...draft, heroSubhead: v })}
-              multiline
-              rows={2}
-            />
-            <div className="grid grid-cols-2 gap-3">
-              <TextField
-                label="Primary CTA"
-                value={draft.heroCtaLabel}
-                onChange={(v) => setDraft({ ...draft, heroCtaLabel: v })}
-              />
-              <TextField
-                label="Secondary CTA"
-                value={draft.heroSecondaryLabel}
-                onChange={(v) => setDraft({ ...draft, heroSecondaryLabel: v })}
-              />
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
