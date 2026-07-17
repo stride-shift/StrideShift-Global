@@ -708,26 +708,28 @@ html[data-theme-switching]::view-transition-new(root) {
    2. The NEW theme sweeps out from the toggle in an unhurried circle,
       softened at the start with its own opacity ramp.
    Together the circle's edge reads as a soft front instead of a hard line. */
+/* Ease-OUT motion: the sweep is moving the instant the transition starts
+   (no dead time after the click), then decelerates into a soft settle. */
 html[data-theme-switching]::view-transition-old(root) {
   z-index: 1;
-  animation: theme-dissolve 1.35s cubic-bezier(0.5, 0, 0.3, 1) forwards;
+  animation: theme-dissolve 1.15s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
 }
 html[data-theme-switching]::view-transition-new(root) {
   z-index: 2;
-  animation: theme-reveal 1.35s cubic-bezier(0.6, 0, 0.3, 1) forwards;
+  animation: theme-reveal 1.15s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
 }
 @keyframes theme-dissolve {
   0%   { opacity: 1; }
-  35%  { opacity: 0.92; }
+  25%  { opacity: 0.8; }
   100% { opacity: 0; }
 }
 @keyframes theme-reveal {
   0% {
     clip-path: circle(0px at var(--theme-x, 90%) var(--theme-y, 5%));
-    opacity: 0.35;
+    opacity: 0.7;
   }
-  18% {
-    clip-path: circle(7vmax at var(--theme-x, 90%) var(--theme-y, 5%));
+  10% {
+    clip-path: circle(12vmax at var(--theme-x, 90%) var(--theme-y, 5%));
     opacity: 1;
   }
   100% {

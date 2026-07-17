@@ -41,7 +41,7 @@ const ThemeToggle = ({ className, variant = 'navbar', scrolled = true }: ThemeTo
   const baseClasses =
     variant === 'navbar'
       ? cn(
-          'inline-flex items-center justify-center w-9 h-9 rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-stride-accent',
+          'inline-flex items-center justify-center w-9 h-9 rounded-full transition-all duration-300 active:scale-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-stride-accent',
           scrolled
             ? 'bg-stride-bg hover:bg-stride-accent-soft text-stride-text-strong'
             : 'bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm'
