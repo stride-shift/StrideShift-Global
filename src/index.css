@@ -702,19 +702,38 @@ html[data-theme-switching]::view-transition-new(root) {
   animation: none;
   mix-blend-mode: normal;
 }
+/* Two motions layered so nothing ever snaps:
+   1. The OLD theme slowly dissolves over the whole screen (a global
+      crossfade running underneath).
+   2. The NEW theme sweeps out from the toggle in an unhurried circle,
+      softened at the start with its own opacity ramp.
+   Together the circle's edge reads as a soft front instead of a hard line. */
 html[data-theme-switching]::view-transition-old(root) {
   z-index: 1;
+  animation: theme-dissolve 1.35s cubic-bezier(0.5, 0, 0.3, 1) forwards;
 }
 html[data-theme-switching]::view-transition-new(root) {
   z-index: 2;
-  /* Unhurried ease-in-out sweep: starts as a gentle bloom from the toggle,
-     accelerates through the middle, then settles softly at the edges. */
-  animation: theme-reveal 1.1s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+  animation: theme-reveal 1.35s cubic-bezier(0.6, 0, 0.3, 1) forwards;
+}
+@keyframes theme-dissolve {
+  0%   { opacity: 1; }
+  35%  { opacity: 0.92; }
+  100% { opacity: 0; }
 }
 @keyframes theme-reveal {
-  0%   { clip-path: circle(0px at var(--theme-x, 90%) var(--theme-y, 5%)); }
-  20%  { clip-path: circle(6vmax at var(--theme-x, 90%) var(--theme-y, 5%)); }
-  100% { clip-path: circle(150vmax at var(--theme-x, 90%) var(--theme-y, 5%)); }
+  0% {
+    clip-path: circle(0px at var(--theme-x, 90%) var(--theme-y, 5%));
+    opacity: 0.35;
+  }
+  18% {
+    clip-path: circle(7vmax at var(--theme-x, 90%) var(--theme-y, 5%));
+    opacity: 1;
+  }
+  100% {
+    clip-path: circle(150vmax at var(--theme-x, 90%) var(--theme-y, 5%));
+    opacity: 1;
+  }
 }
 
 /* ============================================
